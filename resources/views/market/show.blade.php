@@ -5,7 +5,8 @@
             $galleryImages[] = $advert->mainImageUrl();
         }
         foreach ($advert->images as $img) {
-            $galleryImages[] = asset('storage/' . $img->image_path);
+            $path = ltrim((string) $img->image_path, '/');
+            $galleryImages[] = str_starts_with($path, 'images/') ? asset($path) : asset('storage/' . $path);
         }
         $imageCount = count($galleryImages);
     @endphp

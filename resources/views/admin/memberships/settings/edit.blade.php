@@ -49,7 +49,7 @@
 
             @if(!empty($settings['invoice_logo_path']))
                 <div class="mt-3 flex items-center gap-4">
-                    <img src="{{ Storage::disk('public')->url($settings['invoice_logo_path']) }}" alt="Invoice logo" class="h-14 w-auto border border-gray-200 rounded p-1 bg-white">
+                    <img src="{{ str_starts_with(ltrim($settings['invoice_logo_path'], '/'), 'images/') ? asset(ltrim($settings['invoice_logo_path'], '/')) : Storage::disk('public')->url($settings['invoice_logo_path']) }}" alt="Invoice logo" class="h-14 w-auto border border-gray-200 rounded p-1 bg-white">
                     <label class="inline-flex items-center gap-2 text-sm text-gray-600">
                         <input type="checkbox" name="remove_logo" value="1" class="rounded border-gray-300">
                         Remove logo
@@ -67,4 +67,3 @@
     </form>
 </div>
 @endsection
-

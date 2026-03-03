@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class BrandController extends Controller
@@ -68,7 +69,7 @@ class BrandController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('brands', 'public');
+            $validated['image_path'] = $this->storeImageInPublic($request->file('image'), 'brands');
         }
 
         Brand::create($validated);
@@ -111,9 +112,9 @@ class BrandController extends Controller
 
         if ($request->hasFile('image')) {
             if ($brand->image_path) {
-                Storage::disk('public')->delete($brand->image_path);
+                $this->deleteImagePath($brand->image_path);
             }
-            $validated['image_path'] = $request->file('image')->store('brands', 'public');
+            $validated['image_path'] = $this->storeImageInPublic($request->file('image'), 'brands');
         }
 
         $brand->update($validated);
@@ -125,12 +126,45 @@ class BrandController extends Controller
     public function destroy(Brand $brand)
     {
         if ($brand->image_path) {
-            Storage::disk('public')->delete($brand->image_path);
+            $this->deleteImagePath($brand->image_path);
         }
         $brand->children()->update(['parent_id' => null]);
         $brand->delete();
 
         return redirect()->route('admin.brands.index')
             ->with('success', 'Brand deleted.');
+    }
+
+    private function storeImageInPublic(UploadedFile $file, string $folder): string
+    {
+        $folder = trim($folder, '/');
+        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $filename = uniqid('', true) . '.' . ltrim($ext, '.');
+        $relative = 'images/' . $folder . '/' . $filename;
+        $fullPath = public_path($relative);
+        if (!is_dir(dirname($fullPath))) {
+            @mkdir(dirname($fullPath), 0777, true);
+        }
+        $file->move(dirname($fullPath), basename($fullPath));
+
+        return $relative;
+    }
+
+    private function deleteImagePath(?string $path): void
+    {
+        if (!$path) {
+            return;
+        }
+
+        $normalized = ltrim($path, '/');
+        if (str_starts_with($normalized, 'images/')) {
+            $full = public_path($normalized);
+            if (is_file($full)) {
+                @unlink($full);
+            }
+            return;
+        }
+
+        Storage::disk('public')->delete($normalized);
     }
 }

@@ -15,6 +15,10 @@ class AdvertImage extends Model
 
     public function url(): string
     {
-        return asset('storage/' . $this->image_path);
+        $path = ltrim((string) $this->image_path, '/');
+        if (str_starts_with($path, 'images/')) {
+            return asset($path);
+        }
+        return asset('storage/' . $path);
     }
 }

@@ -12,6 +12,7 @@ use App\Models\MembershipOrder;
 use App\Models\MembershipSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -65,12 +66,12 @@ class AdvertController extends Controller
         $mainImagePath = null;
 
         if (!empty($photoFiles)) {
-            $mainImagePath = $photoFiles[0]->store('adverts/main', 'public');
+            $mainImagePath = $this->storeImageInPublic($photoFiles[0], 'adverts/main');
         } elseif (!empty($uploadedPhotoPaths)) {
             $mainImagePath = $this->moveDraftPhotoToFinal(array_shift($uploadedPhotoPaths), true);
         } elseif ($request->hasFile('main_image')) {
             // Fallback for legacy form submissions.
-            $mainImagePath = $request->file('main_image')->store('adverts/main', 'public');
+            $mainImagePath = $this->storeImageInPublic($request->file('main_image'), 'adverts/main');
         }
 
         $user = auth()->user();
@@ -89,7 +90,7 @@ class AdvertController extends Controller
         // Handle gallery images: remaining images from multi-step photo upload.
         if (!empty($photoFiles)) {
             foreach (array_slice($photoFiles, 1) as $index => $file) {
-                $path = $file->store('adverts/gallery', 'public');
+                $path = $this->storeImageInPublic($file, 'adverts/gallery');
                 $advert->images()->create(['image_path' => $path, 'sort_order' => $index]);
             }
         } elseif (!empty($uploadedPhotoPaths)) {
@@ -102,7 +103,7 @@ class AdvertController extends Controller
         } elseif ($request->hasFile('gallery')) {
             // Legacy fallback.
             foreach ($request->file('gallery') as $index => $file) {
-                $path = $file->store('adverts/gallery', 'public');
+                $path = $this->storeImageInPublic($file, 'adverts/gallery');
                 $advert->images()->create(['image_path' => $path, 'sort_order' => $index]);
             }
         }
@@ -135,9 +136,9 @@ class AdvertController extends Controller
         // Replace main image if new one uploaded
         if ($request->hasFile('main_image')) {
             if ($advert->main_image) {
-                Storage::disk('public')->delete($advert->main_image);
+                $this->deleteImagePath($advert->main_image);
             }
-            $validated['main_image'] = $request->file('main_image')->store('adverts/main', 'public');
+            $validated['main_image'] = $this->storeImageInPublic($request->file('main_image'), 'adverts/main');
         }
 
         $advert->update($this->advertFields($validated, isset($validated['main_image']) ? $validated['main_image'] : $advert->main_image, $advert));
@@ -149,7 +150,7 @@ class AdvertController extends Controller
         if ($request->hasFile('gallery')) {
             $nextOrder = $advert->images()->max('sort_order') + 1;
             foreach ($request->file('gallery') as $index => $file) {
-                $path = $file->store('adverts/gallery', 'public');
+                $path = $this->storeImageInPublic($file, 'adverts/gallery');
                 $advert->images()->create(['image_path' => $path, 'sort_order' => $nextOrder + $index]);
             }
         }
@@ -164,10 +165,10 @@ class AdvertController extends Controller
 
         // Delete stored images
         if ($advert->main_image) {
-            Storage::disk('public')->delete($advert->main_image);
+            $this->deleteImagePath($advert->main_image);
         }
         foreach ($advert->images as $img) {
-            Storage::disk('public')->delete($img->image_path);
+            $this->deleteImagePath($img->image_path);
         }
 
         $advert->delete();
@@ -183,7 +184,7 @@ class AdvertController extends Controller
     {
         $this->authorize_owner($advert);
 
-        Storage::disk('public')->delete($image->image_path);
+        $this->deleteImagePath($image->image_path);
         $image->delete();
 
         return back()->with('success', 'Image removed.');
@@ -235,12 +236,12 @@ class AdvertController extends Controller
         ]);
 
         $userId = (int) auth()->id();
-        $path = $request->file('photo')->store("adverts/drafts/{$userId}", 'public');
+        $path = $this->storeImageInPublic($request->file('photo'), "adverts/drafts/{$userId}");
 
         return response()->json([
             'ok' => true,
             'path' => $path,
-            'url' => Storage::disk('public')->url($path),
+            'url' => asset($path),
         ]);
     }
 
@@ -252,10 +253,10 @@ class AdvertController extends Controller
 
         $path = (string) $request->input('path');
         $userId = (int) auth()->id();
-        $prefix = "adverts/drafts/{$userId}/";
+        $prefix = "images/adverts/drafts/{$userId}/";
 
-        if (str_starts_with($path, $prefix) && Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
+        if (str_starts_with($path, $prefix)) {
+            $this->deleteImagePath($path);
         }
 
         return response()->json(['ok' => true]);
@@ -524,12 +525,13 @@ class AdvertController extends Controller
     private function sanitizeDraftPhotoPaths(array $paths): array
     {
         $userId = (int) auth()->id();
-        $prefix = "adverts/drafts/{$userId}/";
+        $newPrefix = "images/adverts/drafts/{$userId}/";
+        $oldPrefix = "adverts/drafts/{$userId}/";
 
         return collect($paths)
-            ->filter(fn ($path) => is_string($path) && str_starts_with($path, $prefix))
+            ->filter(fn ($path) => is_string($path) && (str_starts_with($path, $newPrefix) || str_starts_with($path, $oldPrefix)))
             ->map(fn ($path) => trim($path))
-            ->filter(fn ($path) => Storage::disk('public')->exists($path))
+            ->filter(fn ($path) => $this->imagePathExists($path))
             ->values()
             ->all();
     }
@@ -540,20 +542,78 @@ class AdvertController extends Controller
             return null;
         }
 
-        if (!Storage::disk('public')->exists($path)) {
+        if (!$this->imagePathExists($path)) {
             return null;
         }
 
-        if (!str_starts_with($path, 'adverts/drafts/')) {
+        if (!str_starts_with($path, 'adverts/drafts/') && !str_starts_with($path, 'images/adverts/drafts/')) {
             return $path;
         }
 
-        $ext = pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg';
-        $filename = uniqid('', true) . '.' . $ext;
-        $target = $isMain ? "adverts/main/{$filename}" : "adverts/gallery/{$filename}";
+        $target = $this->generatePublicImagePath($isMain ? 'adverts/main' : 'adverts/gallery', pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg');
+        $targetFull = public_path($target);
+        if (!is_dir(dirname($targetFull))) {
+            @mkdir(dirname($targetFull), 0777, true);
+        }
 
-        Storage::disk('public')->move($path, $target);
+        if (str_starts_with($path, 'images/')) {
+            @rename(public_path($path), $targetFull);
+        } else {
+            Storage::disk('public')->move($path, str_replace('images/', '', $target));
+        }
 
         return $target;
+    }
+
+    private function storeImageInPublic(UploadedFile $file, string $folder): string
+    {
+        $folder = trim($folder, '/');
+        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $target = $this->generatePublicImagePath($folder, $ext);
+        $targetFull = public_path($target);
+        if (!is_dir(dirname($targetFull))) {
+            @mkdir(dirname($targetFull), 0777, true);
+        }
+        $file->move(dirname($targetFull), basename($targetFull));
+
+        return $target;
+    }
+
+    private function generatePublicImagePath(string $folder, string $ext): string
+    {
+        $filename = uniqid('', true) . '.' . ltrim($ext, '.');
+        return 'images/' . trim($folder, '/') . '/' . $filename;
+    }
+
+    private function deleteImagePath(?string $path): void
+    {
+        if (!$path) {
+            return;
+        }
+
+        $normalized = ltrim($path, '/');
+        if (str_starts_with($normalized, 'images/')) {
+            $full = public_path($normalized);
+            if (is_file($full)) {
+                @unlink($full);
+            }
+            return;
+        }
+
+        Storage::disk('public')->delete($normalized);
+    }
+
+    private function imagePathExists(?string $path): bool
+    {
+        if (!$path) {
+            return false;
+        }
+
+        $normalized = ltrim($path, '/');
+        if (str_starts_with($normalized, 'images/')) {
+            return is_file(public_path($normalized));
+        }
+
+        return Storage::disk('public')->exists($normalized);
     }
 }

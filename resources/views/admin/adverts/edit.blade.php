@@ -24,7 +24,7 @@
                 @if($advert->images->count())
                     <div class="grid grid-cols-3 gap-2">
                         @foreach($advert->images as $img)
-                            <img src="{{ asset('storage/' . $img->image_path) }}" alt="" class="w-full h-20 object-cover rounded border border-gray-200">
+                            <img src="{{ str_starts_with(ltrim((string) $img->image_path, '/'), 'images/') ? asset(ltrim((string) $img->image_path, '/')) : asset('storage/' . ltrim((string) $img->image_path, '/')) }}" alt="" class="w-full h-20 object-cover rounded border border-gray-200">
                         @endforeach
                     </div>
                 @else

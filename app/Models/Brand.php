@@ -76,7 +76,12 @@ class Brand extends Model
             return null;
         }
 
-        return asset('storage/' . ltrim($this->image_path, '/'));
+        $path = ltrim($this->image_path, '/');
+        if (str_starts_with($path, 'images/')) {
+            return asset($path);
+        }
+
+        return asset('storage/' . $path);
     }
 
     protected static function boot()

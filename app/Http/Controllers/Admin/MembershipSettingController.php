@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class MembershipSettingController extends Controller
@@ -41,21 +42,53 @@ class MembershipSettingController extends Controller
         $currentLogoPath = SiteSetting::getValue('invoice_logo_path', '');
 
         if ($request->boolean('remove_logo') && $currentLogoPath) {
-            Storage::disk('public')->delete($currentLogoPath);
+            $this->deleteImagePath($currentLogoPath);
             SiteSetting::setValue('invoice_logo_path', '');
             $currentLogoPath = '';
         }
 
         if ($request->hasFile('invoice_logo')) {
             if ($currentLogoPath) {
-                Storage::disk('public')->delete($currentLogoPath);
+                $this->deleteImagePath($currentLogoPath);
             }
-            $path = $request->file('invoice_logo')->store('settings', 'public');
+            $path = $this->storeImageInPublic($request->file('invoice_logo'), 'settings');
             SiteSetting::setValue('invoice_logo_path', $path);
         }
 
         return redirect()->route('admin.membership-settings.edit')
             ->with('success', 'Membership billing settings updated.');
     }
-}
 
+    private function storeImageInPublic(UploadedFile $file, string $folder): string
+    {
+        $folder = trim($folder, '/');
+        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $filename = uniqid('', true) . '.' . ltrim($ext, '.');
+        $relative = 'images/' . $folder . '/' . $filename;
+        $fullPath = public_path($relative);
+        if (!is_dir(dirname($fullPath))) {
+            @mkdir(dirname($fullPath), 0777, true);
+        }
+        $file->move(dirname($fullPath), basename($fullPath));
+
+        return $relative;
+    }
+
+    private function deleteImagePath(?string $path): void
+    {
+        if (!$path) {
+            return;
+        }
+
+        $normalized = ltrim($path, '/');
+        if (str_starts_with($normalized, 'images/')) {
+            $full = public_path($normalized);
+            if (is_file($full)) {
+                @unlink($full);
+            }
+            return;
+        }
+
+        Storage::disk('public')->delete($normalized);
+    }
+}

@@ -5,7 +5,9 @@
             ->map(fn ($path) => [
                 'id' => $path,
                 'path' => $path,
-                'url' => \Illuminate\Support\Facades\Storage::disk('public')->url($path),
+                'url' => str_starts_with(ltrim((string) $path, '/'), 'images/')
+                    ? asset(ltrim((string) $path, '/'))
+                    : \Illuminate\Support\Facades\Storage::disk('public')->url($path),
             ])
             ->values();
         $popularBrands = $brands->where('is_popular', true)->values();

@@ -58,7 +58,7 @@
                     @if($advert->images->count())
                         <div class="flex items-center gap-1">
                             @foreach($advert->images->take(3) as $img)
-                                <img src="{{ asset('storage/' . $img->image_path) }}" alt="" class="w-8 h-8 rounded object-cover border border-gray-200">
+                                <img src="{{ str_starts_with(ltrim((string) $img->image_path, '/'), 'images/') ? asset(ltrim((string) $img->image_path, '/')) : asset('storage/' . ltrim((string) $img->image_path, '/')) }}" alt="" class="w-8 h-8 rounded object-cover border border-gray-200">
                             @endforeach
                             @if($advert->images->count() > 3)
                                 <span class="text-[11px] text-gray-500">+{{ $advert->images->count() - 3 }}</span>

@@ -141,7 +141,11 @@ class Advert extends Model
     public function mainImageUrl(): ?string
     {
         if ($this->main_image) {
-            return asset('storage/' . $this->main_image);
+            $path = ltrim($this->main_image, '/');
+            if (str_starts_with($path, 'images/')) {
+                return asset($path);
+            }
+            return asset('storage/' . $path);
         }
         return null;
     }
