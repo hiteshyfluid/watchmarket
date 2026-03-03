@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -r \"file_put_contents\\(''C:/wamp64/www/wm/resources/views/adverts/create.blade.php'', ''TEST''\\);\")",
+      "Bash(php artisan migrate --force)",
+      "Bash(php artisan route:list --path=adverts)",
+      "Bash(php artisan view:make test_check --force)",
+      "Bash(php -r \":*)",
+      "Bash(npm run build)"
+    ]
+  }
+}
