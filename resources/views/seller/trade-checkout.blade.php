@@ -94,7 +94,7 @@
 
                 <div>
                     <button type="submit" class="bg-black text-white font-bold py-3 px-8 uppercase tracking-widest hover:bg-gray-800 transition">
-                        {{ $requiresStripe ? 'Continue Payment' : 'Activate Subscription' }}
+                        {{ $requiresStripe ? 'Continue to Stripe' : 'Activate Subscription' }}
                     </button>
                 </div>
             </form>
