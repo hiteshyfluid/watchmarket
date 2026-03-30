@@ -81,7 +81,11 @@
                 </td>
                 <td class="px-5 py-4">
                     <span class="px-2 py-1 rounded-full text-xs font-semibold
-                        {{ $order->status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700' }}">
+                        {{ $order->status === 'paid' ? 'bg-green-100 text-green-800' : '' }}
+                        {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                        {{ $order->status === 'failed' ? 'bg-red-100 text-red-800' : '' }}
+                        {{ $order->status === 'cancelled' ? 'bg-gray-200 text-gray-700' : '' }}
+                        {{ !in_array($order->status, ['paid', 'pending', 'failed', 'cancelled']) ? 'bg-gray-100 text-gray-700' : '' }}">
                         {{ ucfirst($order->status) }}
                     </span>
                 </td>

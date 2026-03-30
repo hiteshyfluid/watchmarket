@@ -12,6 +12,7 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/watches', [PublicAdvertController::class, 'index'])->name('market.index');
 Route::get('/watches/{advert}', [PublicAdvertController::class, 'show'])->name('market.show');
 Route::get('/sell-watch', [App\Http\Controllers\SellerController::class, 'index'])->name('sell-watch');
+Route::post('/stripe/webhook', [App\Http\Controllers\StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 // ----------------------------------------------------------------
 // Authenticated (all roles)
@@ -34,10 +35,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/trade/packages', [App\Http\Controllers\SellerController::class, 'tradePackages'])->name('seller.trade.packages');
     Route::get('/trade/checkout/{level}', [App\Http\Controllers\SellerController::class, 'tradeCheckout'])->name('seller.trade.checkout');
     Route::post('/trade/checkout/{level}', [App\Http\Controllers\SellerController::class, 'processTradeCheckout'])->name('seller.trade.checkout.process');
+    Route::get('/trade/checkout/{level}/cancel/{order}', [App\Http\Controllers\SellerController::class, 'cancelTradeCheckout'])->name('seller.trade.checkout.cancel');
     Route::get('/trade/thank-you/{order}', [App\Http\Controllers\SellerController::class, 'tradeThankYou'])->name('seller.trade.thank-you');
     Route::get('/private/packages/{advert}', [App\Http\Controllers\SellerController::class, 'privatePackages'])->name('seller.private.packages');
     Route::get('/private/checkout/{advert}/{level}', [App\Http\Controllers\SellerController::class, 'privateCheckout'])->name('seller.private.checkout');
     Route::post('/private/checkout/{advert}/{level}', [App\Http\Controllers\SellerController::class, 'processPrivateCheckout'])->name('seller.private.checkout.process');
+    Route::get('/private/checkout/{advert}/{level}/cancel/{order}', [App\Http\Controllers\SellerController::class, 'cancelPrivateCheckout'])->name('seller.private.checkout.cancel');
     Route::get('/private/thank-you/{order}', [App\Http\Controllers\SellerController::class, 'privateThankYou'])->name('seller.private.thank-you');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

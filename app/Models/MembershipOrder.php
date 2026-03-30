@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class MembershipOrder extends Model
 {
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_PAID = 'paid';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_FAILED = 'failed';
+
     protected $fillable = [
         'code',
         'user_id',

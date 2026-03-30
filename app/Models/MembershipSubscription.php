@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class MembershipSubscription extends Model
 {
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_REPLACED = 'replaced';
+
     protected $fillable = [
         'user_id',
         'membership_level_id',
@@ -38,4 +41,3 @@ class MembershipSubscription extends Model
         return $this->hasMany(MembershipOrder::class);
     }
 }
-

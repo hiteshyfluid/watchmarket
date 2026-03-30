@@ -91,7 +91,7 @@
                     </a>
                     <a href="{{ route('admin.membership-settings.edit') }}"
                        class="flex items-center gap-2 px-3 py-1.5 rounded text-xs hover:bg-gray-700 hover:text-white {{ request()->routeIs('admin.membership-settings.*') ? 'text-white' : 'text-gray-400' }}">
-                        Billing Settings
+                        Billing & Stripe
                     </a>
                 </div>
             </div>

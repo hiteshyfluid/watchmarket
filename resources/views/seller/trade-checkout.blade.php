@@ -85,16 +85,19 @@
 
                 <div class="bg-white border rounded p-6 space-y-4">
                     <h2 class="text-2xl font-bold text-gray-900">Payment Information</h2>
-                    <p class="text-sm text-gray-500">Demo checkout enabled. Clicking submit will complete checkout and activate subscription.</p>
+                    @if($requiresStripe)
+                    <p class="text-sm text-gray-500">You will be redirected to Stripe {{ strtolower($stripeMode) }} checkout to pay securely by card. Your subscription will activate only after Stripe confirms the payment.</p>
+                    @else
+                    <p class="text-sm text-gray-500">This package has no charge today. Submitting this form will activate the subscription immediately.</p>
+                    @endif
                 </div>
 
                 <div>
                     <button type="submit" class="bg-black text-white font-bold py-3 px-8 uppercase tracking-widest hover:bg-gray-800 transition">
-                        Submit and Check Out
+                        {{ $requiresStripe ? 'Continue Payment' : 'Activate Subscription' }}
                     </button>
                 </div>
             </form>
         </div>
     </section>
 </x-main-layout>
-
