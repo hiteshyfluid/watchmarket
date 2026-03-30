@@ -3,31 +3,32 @@
         <div class="absolute inset-0 bg-center bg-cover" style="background-image:url('{{ asset('images/banner.jpg') }}');"></div>
         <div class="absolute inset-0 bg-black/75"></div>
 
-        <div class="relative site-container px-4 lg:px-8 py-24 lg:py-28">
+        <div class="relative site-container px-4 lg:px-8 py-16 sm:py-20 lg:py-28">
             <div class="max-w-[860px]">
-                <h1 class="text-[42px] md:text-[60px] font-medium leading-[1.08] tracking-[-0.02em]">
+                <h1 class="max-w-[680px] text-[34px] sm:text-[44px] md:text-[60px] font-medium leading-[1.02] sm:leading-[1.08] tracking-[-0.03em]">
                     The Trusted Marketplace for
                     <span class="block text-[#d4b160] font-semibold">Luxury Timepieces</span>
                 </h1>
 
-                <p class="mt-8 text-[16px] md:text-[16px] text-white/90 leading-[1.6] max-w-[900px]">
+                <p class="mt-5 sm:mt-7 text-[15px] sm:text-[16px] text-white/90 leading-[1.65] max-w-[620px]">
                     Buy and sell pre-owned luxury watches from verified sellers. Connect directly,
                     meet safely, transact with confidence.
                 </p>
 
-                <form action="{{ route('market.index') }}" method="GET" class="mt-10 flex flex-col sm:flex-row gap-3 max-w-[670px]">
-                    <label class="flex-1 h-14 rounded-2xl border border-white/30 bg-white/10 backdrop-blur px-3 flex items-center gap-3">
-                        <svg class="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <form action="{{ route('market.index') }}" method="GET" class="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-[680px]">
+                    <label class="flex-1 min-h-[56px] rounded-[20px] border border-white/30 bg-white/10 backdrop-blur px-4 py-3 flex items-center gap-3 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white/80 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                         <input
                             type="text"
                             name="q"
                             placeholder="Search by brand, model, or reference..."
-                            class="w-full bg-transparent border-0 outline-none ring-0 focus:ring-0 focus:outline-none text-white placeholder:text-white/60 text-[16px]"
+                            class="w-full bg-transparent border-0 outline-none ring-0 focus:ring-0 focus:outline-none text-white placeholder:text-white/60 text-[15px] sm:text-[16px] leading-tight"
                         >
                     </label>
-                    <button type="submit" class="h-14 sm:w-44 rounded-2xl bg-[#d4b160] text-[#111] text-[16px] font-semibold hover:bg-[#c7a552] transition">
+
+                    <button type="submit" class="w-full sm:w-44 min-h-[56px] rounded-[20px] bg-[#d4b160] text-[#111] text-[16px] font-semibold hover:bg-[#c7a552] transition shadow-[0_18px_45px_rgba(0,0,0,0.2)]">
                         Search
                     </button>
                 </form>
@@ -79,8 +80,8 @@
     </section>
     <section class="bg-[#fafaf9] mt-2 py-12">
         <div class="site-container px-5 lg:px-8">
-            <div class="flex items-end justify-between mb-6">
-                <h2 class="text-[30px] font-semibold text-[#111]">Browse by Brand</h2>
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
+                <h2 class="text-[28px] sm:text-[30px] font-semibold text-[#111]">Browse by Brand</h2>
                 <a href="{{ route('market.index') }}" class="text-[#c7a552] text-[14px] font-medium no-underline hover:underline">View all brands &nbsp;&rsaquo;</a>
             </div>
 
@@ -107,8 +108,8 @@
     </section>
     <section class="bg-[#080808] py-14">
         <div class="site-container px-5 lg:px-8">
-            <div class="flex items-center justify-between mb-7">
-                <h2 class="text-[30px] font-semibold text-white">Featured Watches</h2>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-7">
+                <h2 class="text-[28px] sm:text-[30px] font-semibold text-white">Featured Watches</h2>
                 <a href="{{ route('market.index') }}" class="text-[#d4b160] text-[14px] font-medium no-underline hover:underline">View all &nbsp;&rsaquo;</a>
             </div>
 
@@ -150,8 +151,8 @@
 
     <section class="bg-[#fafaf9] py-14">
         <div class="site-container px-5 lg:px-8">
-            <div class="flex items-center justify-between mb-7">
-                <h2 class="text-[30px] font-semibold text-[#111]">Recently Listed</h2>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-7">
+                <h2 class="text-[28px] sm:text-[30px] font-semibold text-[#111]">Recently Listed</h2>
                 <a href="{{ route('market.index') }}" class="text-[#c7a552] text-[14px] font-medium no-underline hover:underline">View all &nbsp;&rsaquo;</a>
             </div>
 
@@ -201,18 +202,18 @@
 
     <section class="bg-[#f3f3f3] py-20 border-t border-[#e5e5e5]">
         <div class="site-container px-5 lg:px-8 text-center">
-            <h2 class="text-[32px] font-semibold text-[#111]">Ready to Sell Your Watch?</h2>
+            <h2 class="text-[30px] sm:text-[32px] font-semibold text-[#111]">Ready to Sell Your Watch?</h2>
             <p class="mt-5 text-[16px] text-[#4d4d4d] max-w-3xl mx-auto">
                 List your timepiece in minutes. Reach thousands of verified buyers across the UK.
             </p>
 
             <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a href="{{ route('sell-watch') }}"
-                   class="inline-flex items-center justify-center min-w-[200px] h-14 px-8 rounded-2xl bg-black text-white text-[16px] font-semibold no-underline hover:bg-[#161616] transition">
+                   class="inline-flex items-center justify-center w-full sm:w-auto min-w-[200px] h-14 px-8 rounded-2xl bg-black text-white text-[16px] font-semibold no-underline hover:bg-[#161616] transition">
                     Create a Listing
                 </a>
                 <a href="{{ route('seller.trade.packages') }}"
-                   class="inline-flex items-center justify-center min-w-[180px] h-14 px-8 rounded-2xl border border-[#d2d2d2] bg-white text-[#111] text-[16px] font-medium no-underline hover:bg-[#fafafa] transition">
+                   class="inline-flex items-center justify-center w-full sm:w-auto min-w-[180px] h-14 px-8 rounded-2xl border border-[#d2d2d2] bg-white text-[#111] text-[16px] font-medium no-underline hover:bg-[#fafafa] transition">
                     View Pricing
                 </a>
             </div>

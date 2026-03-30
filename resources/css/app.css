@@ -1,33 +1,54 @@
 @import "tailwindcss";
 
 @layer base {
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
     html,
     body {
         font-family: "Inter", sans-serif;
         font-size: 16px;
+        overflow-x: hidden;
     }
 
     p,
     a,
-    li {
+    li,
+    button,
+    input,
+    select,
+    textarea {
         font-size: 16px;
     }
 
     h1 {
-        font-size: 60px;
+        font-size: clamp(2.25rem, 5vw, 3.75rem);
         font-weight: 500;
         line-height: 1.1;
     }
 
     h2 {
-        font-size: 32px;
+        font-size: clamp(1.75rem, 3.4vw, 2rem);
         font-weight: 600;
         line-height: 1.2;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    [x-cloak] {
+        display: none !important;
     }
 }
 
 @layer utilities {
     .site-container {
+        width: min(100%, 1280px);
         max-width: 1280px;
         margin-left: auto;
         margin-right: auto;

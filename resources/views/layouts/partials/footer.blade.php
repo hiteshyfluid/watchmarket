@@ -40,9 +40,9 @@
             </div>
         </div>
 
-        <div class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-[14px]">
+        <div class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-[14px] text-center md:text-left">
             <div class="text-[#b8b8b8]">&copy; {{ now()->year }} WatchMarket. All rights reserved.</div>
-            <div class="flex items-center gap-8">
+            <div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
                 <a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Privacy Policy</a>
                 <a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Terms of Service</a>
                 <a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Cookie Policy</a>

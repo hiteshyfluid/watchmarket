@@ -1,12 +1,12 @@
 ﻿<x-main-layout>
     <section class="border-b border-[#dcdcdc]">
         <div class="site-container px-5 lg:px-8">
-         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 py-8 ">
+         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 py-8">
                 <div>
                     <h1 class="text-[30px] font-medium text-[#111] leading-tight">Dashboard</h1>
                     <p class="text-[16px] text-[#666] mt-2">Welcome back, {{ $user->first_name }} {{ $user->last_name }}</p>
                 </div>
-                <a href="{{ route('adverts.create') }}" class="inline-flex items-center gap-2 h-12 px-7 rounded-xl bg-black text-white text-[16px] font-semibold no-underline hover:bg-[#161616]">
+                <a href="{{ route('adverts.create') }}" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 h-12 px-7 rounded-xl bg-black text-white text-[16px] font-semibold no-underline hover:bg-[#161616]">
                     <span>+</span>
                     <span>New Listing</span>
                 </a>
@@ -100,16 +100,16 @@
                     <div class="space-y-4">
                         @forelse($listings as $advert)
                             <div class="rounded-2xl border border-[#d9d9d9] bg-white p-5" x-data="{ openAction: false }">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div class="flex gap-4">
-                                        <div class="w-28 h-28 rounded-xl overflow-hidden bg-[#f2f2f2]">
+                                <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
+                                    <div class="flex flex-col sm:flex-row gap-4">
+                                        <div class="w-full sm:w-28 h-52 sm:h-28 rounded-xl overflow-hidden bg-[#f2f2f2] shrink-0">
                                             @if($advert->mainImageUrl())
                                                 <img src="{{ $advert->mainImageUrl() }}" alt="{{ $advert->title }}" class="w-full h-full object-cover">
                                             @endif
                                         </div>
-                                        <div>
+                                        <div class="min-w-0">
                                             <h3 class="text-[18px] font-semibold text-[#111]">{{ $advert->title }}</h3>
-                                            <p class="text-[40px] leading-none font-semibold mt-2">£{{ number_format((float) $advert->price, 0) }}</p>
+                                            <p class="text-[30px] sm:text-[40px] leading-none font-semibold mt-2">£{{ number_format((float) $advert->price, 0) }}</p>
                                             <div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px] text-[#666]">
                                                 <span class="inline-flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/><circle cx="12" cy="12" r="3" stroke-width="1.8"></circle></svg> 0 views</span>
                                                 <span class="inline-flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg> 0 enquiries</span>
@@ -125,12 +125,16 @@
                                         </div>
                                     </div>
 
-                                    <div class="relative">
-                                        <div class="flex items-center gap-3">
+                                    <div class="relative xl:ml-4">
+                                        <div class="flex items-center justify-between sm:justify-start gap-3">
                                             <span class="px-4 h-7 rounded-lg text-[14px] inline-flex items-center capitalize {{ $advert->statusBadgeClass() }}">{{ $advert->status }}</span>
-                                            <button type="button" @click="openAction = !openAction" class="w-11 h-11 rounded-lg border border-[#d8d8d8] text-[#444] hover:bg-[#f7f7f7]">?</button>
+                                            <button type="button" @click="openAction = !openAction" class="w-11 h-11 rounded-lg border border-[#d8d8d8] text-[#444] hover:bg-[#f7f7f7]" aria-label="Listing actions">
+                                                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 5.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 8a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 8a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/>
+                                                </svg>
+                                            </button>
                                         </div>
-                                        <div x-cloak x-show="openAction" @click.away="openAction = false" class="absolute right-0 mt-2 w-52 bg-[#f7f7f7] border border-[#d8d8d8] rounded-xl shadow-md overflow-hidden z-20">
+                                        <div x-cloak x-show="openAction" @click.away="openAction = false" class="absolute right-0 mt-2 w-full sm:w-52 bg-[#f7f7f7] border border-[#d8d8d8] rounded-xl shadow-md overflow-hidden z-20">
                                             <a href="{{ route('adverts.edit', $advert) }}" class="block px-4 py-3 text-[16px] text-[#222] no-underline hover:bg-[#eeeeee]">Edit Listing</a>
                                             <form method="POST" action="{{ route('adverts.mark-sold', $advert) }}">
                                                 @csrf @method('PATCH')
