@@ -10,6 +10,8 @@
 
     <div class="py-24 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-flash-messages class="mb-8" />
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <!-- Private Seller -->
                 <div class="border rounded-sm overflow-hidden shadow-sm hover:shadow-md transition">

@@ -7,6 +7,8 @@
 
     <section class="py-12 bg-gray-50">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-flash-messages class="mb-6" />
+
             @if($errors->any())
             <div class="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded mb-6 text-sm">
                 <strong>Please fix the errors below:</strong>

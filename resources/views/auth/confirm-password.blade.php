@@ -7,6 +7,8 @@
                     This is a secure area. Please confirm your password before continuing.
                 </p>
 
+                <x-flash-messages class="mb-4" />
+
                 <form method="POST" action="{{ route('password.confirm') }}" class="space-y-5">
                     @csrf
 

@@ -7,6 +7,7 @@
                     Set a new password for <strong>{{ $email }}</strong>.
                 </p>
 
+                <x-flash-messages class="mb-4" />
                 <x-auth-session-status class="mb-4" :status="session('status')" />
 
                 <form method="POST" action="{{ route('password.store') }}" class="space-y-5">

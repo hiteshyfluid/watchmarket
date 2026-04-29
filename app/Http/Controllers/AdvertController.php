@@ -9,7 +9,6 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\MembershipLevel;
 use App\Models\MembershipOrder;
-use App\Models\MembershipSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
@@ -51,15 +50,16 @@ class AdvertController extends Controller
         }
 
         $validated = $request->validate($this->rules());
+        $validated = $this->normalizeAdvertBooleans($request, $validated);
 
         $photoFiles = $request->file('photos', []);
         $uploadedPhotoPaths = $this->sanitizeDraftPhotoPaths((array) $request->input('uploaded_photos', []));
         $uploadedPhotoCount = count($uploadedPhotoPaths);
         $photoCount = max(count($photoFiles), $uploadedPhotoCount);
 
-        if ($photoCount < 5) {
+        if ($photoCount < 2) {
             throw ValidationException::withMessages([
-                'photos' => 'Please upload at least 5 images.',
+                'photos' => 'Please upload at least 2 images.',
             ]);
         }
 
@@ -131,6 +131,7 @@ class AdvertController extends Controller
         $this->authorize_owner($advert);
 
         $validated = $request->validate($this->rules(false));
+        $validated = $this->normalizeAdvertBooleans($request, $validated);
         $this->enforcePrivatePublishedRestrictions($advert, $validated);
 
         // Replace main image if new one uploaded
@@ -196,12 +197,12 @@ class AdvertController extends Controller
 
         if ($advert->status === Advert::STATUS_ACTIVE) {
             $advert->update(['status' => Advert::STATUS_PAUSED]);
-            return back()->with('success', 'Advert paused.');
+            return back()->with('success', 'Advert put on hold.');
         }
 
         if ($advert->status === Advert::STATUS_PAUSED) {
             $advert->update(['status' => Advert::STATUS_ACTIVE]);
-            return back()->with('success', 'Advert activated.');
+            return back()->with('success', 'Advert resumed.');
         }
 
         return back()->with('error', 'Only active or paused adverts can be toggled.');
@@ -314,7 +315,7 @@ class AdvertController extends Controller
             'meeting_preference_id'=> 'nullable|exists:attribute_options,id',
             'show_phone'          => 'nullable|boolean',
             'main_image'          => $isCreate ? 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120' : 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
-            'gallery.*'           => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'gallery.*'           => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'photos'              => 'nullable|array|max:20',
             'photos.*'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'uploaded_photos'     => 'nullable|array|max:20',
@@ -417,43 +418,7 @@ class AdvertController extends Controller
 
     private function tradeAdvertUsage($user): ?array
     {
-        if (!$user->isTradeSeller()) {
-            return null;
-        }
-
-        $subscription = MembershipSubscription::query()
-            ->with('level')
-            ->where('user_id', $user->id)
-            ->where('status', 'active')
-            ->latest('id')
-            ->first();
-
-        $activeCount = Advert::query()
-            ->where('user_id', $user->id)
-            ->where('status', Advert::STATUS_ACTIVE)
-            ->count();
-
-        if (!$subscription || !$subscription->level || $subscription->level->seller_type !== MembershipLevel::SELLER_TYPE_TRADE) {
-            return [
-                'active_count' => $activeCount,
-                'max' => 0,
-                'unlimited' => false,
-                'can_create' => false,
-                'display' => "{$activeCount}/0",
-            ];
-        }
-
-        $max = (int) $subscription->level->trade_max_advert_count;
-        $unlimited = $max === -1;
-        $canCreate = $unlimited || $activeCount < $max;
-
-        return [
-            'active_count' => $activeCount,
-            'max' => $max,
-            'unlimited' => $unlimited,
-            'can_create' => $canCreate,
-            'display' => $unlimited ? "{$activeCount}/Unlimited" : "{$activeCount}/{$max}",
-        ];
+        return $user->tradeAdvertUsage();
     }
 
     private function pauseExpiredAdvertsForUser(int $userId): void
@@ -615,5 +580,14 @@ class AdvertController extends Controller
         }
 
         return Storage::disk('public')->exists($normalized);
+    }
+
+    private function normalizeAdvertBooleans(Request $request, array $validated): array
+    {
+        $validated['price_negotiable'] = $request->boolean('price_negotiable');
+        $validated['accept_traders'] = $request->boolean('accept_traders');
+        $validated['show_phone'] = $request->boolean('show_phone');
+
+        return $validated;
     }
 }

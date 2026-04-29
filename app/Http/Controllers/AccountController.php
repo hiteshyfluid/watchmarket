@@ -19,6 +19,7 @@ class AccountController extends Controller
         $user = Auth::user();
         $tab = (string) $request->query('tab', 'dashboard');
         $listingFilter = (string) $request->query('listing', 'all');
+        $tradeUsage = $user->tradeAdvertUsage();
 
         $statusCounts = [
             'all' => (int) $user->adverts()->count(),
@@ -46,6 +47,7 @@ class AccountController extends Controller
             'enquiries' => 0,
             'active' => $statusCounts['active'],
             'sold' => $statusCounts['sold'],
+            'available_listings' => $tradeUsage['available_display'] ?? null,
         ];
 
         $subscriptions = MembershipSubscription::query()
@@ -69,6 +71,7 @@ class AccountController extends Controller
             'listingFilter',
             'statusCounts',
             'stats',
+            'tradeUsage',
             'subscriptions',
             'orders'
         ));

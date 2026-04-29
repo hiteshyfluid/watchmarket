@@ -1,12 +1,14 @@
 <x-main-layout>
     <section class="bg-gray-100 py-12">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-3xl font-bold text-gray-900">Private Seller Checkout</h1>
+            <h1 class="text-3xl font-bold text-gray-900">Your Package</h1>
         </div>
     </section>
 
     <section class="py-12 bg-gray-50">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-flash-messages class="mb-6" />
+
             @if($errors->any())
             <div class="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded mb-6 text-sm">
                 <strong>Please fix the errors below:</strong>
@@ -24,7 +26,7 @@
                 <div class="bg-white border rounded p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-900">Subscription Level</h2>
+                            <h2 class="text-2xl font-bold text-gray-900">Your Package</h2>
                             <p class="text-gray-600 mt-1">{{ $level->name }}</p>
                         </div>
                         <a href="{{ route('seller.private.packages', $advert) }}" class="text-sm text-blue-600 hover:underline">Change Package</a>

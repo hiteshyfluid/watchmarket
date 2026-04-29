@@ -10,15 +10,7 @@
 
     <div class="py-10 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-            {{-- Flash messages --}}
-            @foreach(['success', 'error'] as $type)
-            @if(session($type))
-            <div class="mb-6 px-5 py-3 rounded text-sm border {{ $type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800' }}">
-                {{ session($type) }}
-            </div>
-            @endif
-            @endforeach
+            <x-flash-messages class="mb-6" />
 
             <div class="flex items-center justify-between mb-6">
                 <div>
@@ -27,7 +19,11 @@
                     </h2>
                     @if(!empty($tradeUsage))
                     <p class="text-sm text-gray-500 mt-1">
-                        Active usage: <span class="font-semibold text-gray-700">{{ $tradeUsage['display'] }}</span>
+                        Available listings:
+                        <span class="font-semibold text-gray-700">{{ $tradeUsage['available_display'] }}</span>
+                        <span class="text-gray-400">
+                            (Used: {{ $tradeUsage['display'] }})
+                        </span>
                     </p>
                     @endif
                 </div>
@@ -119,7 +115,7 @@
                                 <form method="POST" action="{{ route('adverts.pause', $advert) }}" class="inline">
                                     @csrf @method('PATCH')
                                     <button type="submit" class="text-amber-600 hover:underline text-xs">
-                                        {{ $advert->status === \App\Models\Advert::STATUS_ACTIVE ? 'Pause' : 'Resume' }}
+                                        {{ $advert->status === \App\Models\Advert::STATUS_ACTIVE ? 'Put on Hold' : 'Resume' }}
                                     </button>
                                 </form>
                                 @endif

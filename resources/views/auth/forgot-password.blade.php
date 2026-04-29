@@ -7,6 +7,7 @@
                     Enter your email address. We will send a 6-digit OTP to verify your identity.
                 </p>
 
+                <x-flash-messages class="mb-4" />
                 <x-auth-session-status class="mb-4" :status="session('status')" />
 
                 <form method="POST" action="{{ route('password.email') }}" class="space-y-5">

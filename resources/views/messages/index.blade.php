@@ -48,6 +48,8 @@
                             </template>
                         </div>
 
+                        <x-flash-messages class="mt-4" />
+
                         <div class="mt-3">
                             <input
                                 type="text"

@@ -27,6 +27,7 @@
             </div>
 
             <div class="site-container px-5 lg:px-8 max-w-5xl">
+                <x-flash-messages class="mt-6" />
                 @if($errors->any())
                     <div class="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl mb-6 text-sm">
                         <strong>Please fix the errors below:</strong>
@@ -39,7 +40,7 @@
                 @endif
 
                 <div class="form-main max-w-2xl m-auto">
-                    <form id="edit-advert-form" action="{{ route('adverts.update', $advert) }}" method="POST" enctype="multipart/form-data" class="p-6 md:p-8">
+                    <form id="edit-advert-form" action="{{ route('adverts.update', $advert) }}" method="POST" enctype="multipart/form-data" class="p-6 md:p-8" novalidate @submit.prevent="submitForm">
                         @csrf
                         @method('PUT')
 
@@ -85,7 +86,7 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-[16px] font-semibold text-[#111] mb-2">Reference Number</label>
+                                    <label class="block text-[16px] font-semibold text-[#111] mb-2">Watch Serial No:</label>
                                     <input type="text" name="reference_number" value="{{ old('reference_number', $advert->reference_number) }}" placeholder="e.g., 126610LN"
                                         class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                                 </div>
@@ -95,7 +96,7 @@
                                         <label class="block text-[16px] font-semibold text-[#111] mb-2">Year *</label>
                                         <select name="year_id" required {{ $privateEditLock ? 'disabled' : '' }} class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $privateEditLock ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                             <option value="">Select year</option>
-                                            @foreach($years as $opt)
+                                            @foreach($years->reverse() as $opt)
                                                 <option value="{{ $opt->id }}" {{ old('year_id', $advert->year_id) == $opt->id ? 'selected' : '' }}>{{ $opt->name }}</option>
                                             @endforeach
                                         </select>
@@ -220,12 +221,16 @@
                                             @foreach($advert->images as $img)
                                                 <div class="relative group">
                                                     <img src="{{ $img->url() }}" class="w-24 h-20 object-cover rounded border border-[#d7d7d7]" alt="Gallery image">
-                                                    <form method="POST" action="{{ route('adverts.images.destroy', [$advert, $img]) }}"
-                                                        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/50 rounded transition">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="text-white text-xs font-bold" onclick="return confirm('Remove this image?')">Remove</button>
-                                                    </form>
+                                                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/50 rounded transition">
+                                                        <button
+                                                            type="submit"
+                                                            form="delete-image-{{ $img->id }}"
+                                                            class="text-white text-xs font-bold"
+                                                            onclick="return confirm('Remove this image?')"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             @endforeach
                                         </div>
@@ -316,9 +321,17 @@
                             <button type="button" @click="prevStep" class="h-11 px-6 rounded-lg border border-[#d1d1d1] bg-white text-[16px] text-[#333]" :class="step === 1 ? 'opacity-50 cursor-not-allowed' : ''" :disabled="step === 1">Back</button>
 
                             <button type="button" x-show="step < 4" @click="nextStep" class="h-11 px-6 rounded-lg bg-[#171717] text-white text-[16px] font-semibold">Continue</button>
-                            <button type="submit" x-show="step === 4" class="h-11 px-6 rounded-lg bg-[#d4b160] text-[#111] text-[16px] font-semibold">Update Listing</button>
+                            <button type="button" x-show="step === 4" @click="submitForm" class="h-11 px-6 rounded-lg bg-[#d4b160] text-[#111] text-[16px] font-semibold">Update Listing</button>
                         </div>
                     </form>
+                    @if($advert->images->count())
+                        @foreach($advert->images as $img)
+                            <form id="delete-image-{{ $img->id }}" method="POST" action="{{ route('adverts.images.destroy', [$advert, $img]) }}" class="hidden">
+                                @csrf
+                                @method('DELETE')
+                            </form>
+                        @endforeach
+                    @endif
                 </div>
             </div>
         </div>
@@ -371,7 +384,40 @@
                         }
                     }
 
+                    if (current === 4) {
+                        const price = form.querySelector('[name="price"]');
+                        if (price && !String(price.value || '').trim()) {
+                            price.focus();
+                            return false;
+                        }
+
+                        @if($privatePriceRange)
+                            const minPrice = {{ (float) $privatePriceRange['min'] }};
+                            const maxPrice = {{ (float) $privatePriceRange['max'] }};
+                            const currentPrice = parseFloat(price?.value || '0');
+                            if (currentPrice < minPrice || currentPrice > maxPrice) {
+                                price?.focus();
+                                alert(`You can set pricing only between £${minPrice.toFixed(2)} and £${maxPrice.toFixed(2)} for this package.`);
+                                return false;
+                            }
+                        @endif
+                    }
+
                     return true;
+                },
+                submitForm() {
+                    const form = document.getElementById('edit-advert-form');
+                    if (!form) return;
+
+                    for (const targetStep of [1, 2, 4]) {
+                        if (!this.validateStep(targetStep)) {
+                            this.step = targetStep;
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            return;
+                        }
+                    }
+
+                    HTMLFormElement.prototype.submit.call(form);
                 }
             }
         }

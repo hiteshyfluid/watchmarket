@@ -7,6 +7,8 @@
 
     <section class="py-16 bg-white">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-flash-messages class="mb-8" />
+
             <div class="text-center mb-12">
                 <h2 class="text-5xl font-bold text-gray-900">Your Subscription is now active!</h2>
                 <p class="mt-6 text-xl text-gray-600">Thank you for your purchase.</p>
@@ -47,4 +49,3 @@
         </div>
     </section>
 </x-main-layout>
-

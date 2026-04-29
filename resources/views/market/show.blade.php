@@ -97,6 +97,8 @@
                     @endif
                 </div>
 
+                <x-flash-messages class="mt-5" />
+
                 <div class="mt-5">
                     <button type="button" @click="openEnquiry()" class="w-full h-[54px] bg-black text-white rounded-xl font-semibold text-[16px] hover:bg-[#1f1f1f]">Enquire About This Watch</button>
                 </div>

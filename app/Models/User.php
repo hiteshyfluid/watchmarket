@@ -102,4 +102,47 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
+    public function tradeAdvertUsage(): ?array
+    {
+        if (!$this->isTradeSeller()) {
+            return null;
+        }
+
+        $subscription = $this->membershipSubscriptions()
+            ->with('level')
+            ->where('status', MembershipSubscription::STATUS_ACTIVE)
+            ->latest('id')
+            ->first();
+
+        $activeCount = $this->adverts()
+            ->where('status', Advert::STATUS_ACTIVE)
+            ->count();
+
+        if (!$subscription || !$subscription->level || $subscription->level->seller_type !== MembershipLevel::SELLER_TYPE_TRADE) {
+            return [
+                'active_count' => $activeCount,
+                'max' => 0,
+                'unlimited' => false,
+                'can_create' => false,
+                'remaining_count' => 0,
+                'display' => "{$activeCount}/0",
+                'available_display' => '0',
+            ];
+        }
+
+        $max = (int) $subscription->level->trade_max_advert_count;
+        $unlimited = $max === -1;
+        $remainingCount = $unlimited ? null : max($max - $activeCount, 0);
+
+        return [
+            'active_count' => $activeCount,
+            'max' => $max,
+            'unlimited' => $unlimited,
+            'can_create' => $unlimited || $activeCount < $max,
+            'remaining_count' => $remainingCount,
+            'display' => $unlimited ? "{$activeCount}/Unlimited" : "{$activeCount}/{$max}",
+            'available_display' => $unlimited ? 'Unlimited' : (string) $remainingCount,
+        ];
+    }
 }

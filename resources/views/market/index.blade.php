@@ -138,6 +138,8 @@
 
         <section class="bg-[#f3f3f3]">
             <div class="site-container px-5 lg:px-8 py-8">
+                <x-flash-messages class="mb-6" />
+
                 <div x-cloak x-show="filterOpen" class="lg:hidden fixed inset-0 z-50">
                     <div class="absolute inset-0 bg-black/45" @click="filterOpen = false"></div>
 

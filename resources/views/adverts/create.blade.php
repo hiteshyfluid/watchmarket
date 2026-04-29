@@ -38,6 +38,7 @@
                 </div>
             </div>
 <div class="site-container px-5 lg:px-8 max-w-5xl">
+             <x-flash-messages class="mt-6" />
              @if($errors->any())
                 <div class="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl mb-6 text-sm">
                     <strong>Please fix the errors below:</strong>
@@ -49,7 +50,7 @@
                 </div>
             @endif
             <div class="form-main max-w-2xl m-auto">
-                <form id="create-advert-form" action="{{ route('adverts.store') }}" method="POST" enctype="multipart/form-data" class="p-6 md:p-8" @submit="syncPhotosInput()">
+                <form id="create-advert-form" action="{{ route('adverts.store') }}" method="POST" enctype="multipart/form-data" class="p-6 md:p-8" novalidate @submit.prevent="submitForm">
                     @csrf
 
                     <div x-show="step === 1" x-cloak>
@@ -140,7 +141,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[16px] font-semibold text-[#111] mb-2">Reference Number</label>
+                                <label class="block text-[16px] font-semibold text-[#111] mb-2">Watch Serial No:</label>
                                 <input type="text" name="reference_number" value="{{ old('reference_number') }}" placeholder="e.g., 126610LN"
                                     class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                             </div>
@@ -150,7 +151,7 @@
                                     <label class="block text-[16px] font-semibold text-[#111] mb-2">Year *</label>
                                     <select name="year_id" required class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                                         <option value="">Select year</option>
-                                        @foreach($years as $opt)
+                                        @foreach($years->reverse() as $opt)
                                             <option value="{{ $opt->id }}" {{ old('year_id') == $opt->id ? 'selected' : '' }}>{{ $opt->name }}</option>
                                         @endforeach
                                     </select>
@@ -254,7 +255,7 @@
 
                     <div x-show="step === 3" x-cloak>
                         <h2 class="text-[28px] font-semibold text-[#111]">Photos</h2>
-                        <p class="text-[16px] text-[#666] mt-2">Upload at least 5 high-quality images</p>
+                        <p class="text-[16px] text-[#666] mt-2">Upload at least 2 high-quality images</p>
 
                         <div class="mt-6 border border-[#d8d8d8] rounded-xl p-5 space-y-5 bg-[#fafafa]">
                             <div class="rounded-lg border border-[#e9cf8d] bg-[#fbf6e7] p-4 text-[12px] text-[#7a4e00]">
@@ -273,7 +274,7 @@
                                     <span class="text-center text-[14px]">Add Photos</span>
                                     <input id="photos-input" type="file" name="photos[]" accept=".jpg,.jpeg,.png,.webp" multiple class="hidden" @change="handlePhotos($event)">
                                 </label>
-                                <p class="text-[13px] text-[#777] mt-2">Minimum 5, Maximum 20 images. First image becomes main image.</p>
+                                <p class="text-[13px] text-[#777] mt-2">Minimum 2, Maximum 20 images. First image becomes main image.</p>
                             </div>
 
                             <template x-for="path in uploadedPhotoPaths" :key="path">
@@ -370,7 +371,7 @@
                         <button type="button" @click="prevStep" class="h-11 px-6 rounded-lg border border-[#d1d1d1] bg-white text-[16px] text-[#333]" :class="step === 1 ? 'opacity-50 cursor-not-allowed' : ''" :disabled="step === 1">Back</button>
 
                         <button type="button" x-show="step < 4" @click="nextStep" class="h-11 px-6 rounded-lg bg-[#171717] text-white text-[16px] font-semibold">Continue</button>
-                        <button type="submit" x-show="step === 4" class="h-11 px-6 rounded-lg bg-[#d4b160] text-[#111] text-[16px] font-semibold">Create Listing</button>
+                        <button type="button" x-show="step === 4" @click="submitForm" class="h-11 px-6 rounded-lg bg-[#d4b160] text-[#111] text-[16px] font-semibold">Create Listing</button>
                     </div>
                 </form>
                 </div>
@@ -403,7 +404,7 @@
                 steps: [
                     { title: 'Watch Details', subtitle: 'Basic information' },
                     { title: 'Specifications', subtitle: 'Technical details' },
-                    { title: 'Photos', subtitle: 'Minimum 5 images' },
+                    { title: 'Photos', subtitle: 'Minimum 2 images' },
                     { title: 'Pricing & Location', subtitle: 'Final step' },
                 ],
                 init() {
@@ -481,8 +482,8 @@
                             this.photoError = 'Please wait, photos are still uploading.';
                             return false;
                         }
-                        if (this.photoCount < 5) {
-                            this.photoError = 'Please upload at least 5 images.';
+                        if (this.photoCount < 2) {
+                            this.photoError = 'Please upload at least 2 images.';
                             return false;
                         }
                         if (this.photoCount > 20) {
@@ -491,7 +492,33 @@
                         }
                     }
 
+                    if (current === 4) {
+                        const required = ['price', 'city'];
+                        for (const name of required) {
+                            const el = form.querySelector(`[name="${name}"]`);
+                            if (el && !String(el.value || '').trim()) {
+                                el.focus?.();
+                                return false;
+                            }
+                        }
+                    }
+
                     return true;
+                },
+                submitForm() {
+                    const form = document.getElementById('create-advert-form');
+                    if (!form) return;
+
+                    for (const targetStep of [1, 2, 3, 4]) {
+                        if (!this.validateStep(targetStep)) {
+                            this.step = targetStep;
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            return;
+                        }
+                    }
+
+                    this.syncPhotosInput();
+                    HTMLFormElement.prototype.submit.call(form);
                 },
                 handlePhotos(event) {
                     const input = event.target;
@@ -499,6 +526,15 @@
                     if (!incoming.length) return;
 
                     this.photoError = '';
+                    const maxSize = 5 * 1024 * 1024; // 5MB
+                    for (const file of incoming) {
+                        if (file.size > maxSize) {
+                            this.photoError = `File "${file.name}" is too large. Maximum size is 5MB.`;
+                            input.value = '';
+                            return;
+                        }
+                    }
+
                     const availableSlots = 20 - this.uploadedPhotoPaths.length;
                     const files = incoming.slice(0, Math.max(availableSlots, 0));
                     if (!files.length) {
@@ -576,8 +612,8 @@
                     }
                 },
                 updatePhotoValidation() {
-                    if (this.photoCount < 5) {
-                        this.photoError = 'Please upload at least 5 images.';
+                    if (this.photoCount < 2) {
+                        this.photoError = 'Please upload at least 2 images.';
                     } else if (this.photoCount > 20) {
                         this.photoError = 'You can upload a maximum of 20 images.';
                     } else {

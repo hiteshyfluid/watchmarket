@@ -1,4 +1,4 @@
-﻿<x-main-layout>
+<x-main-layout>
     <section class="border-b border-[#dcdcdc]">
         <div class="site-container px-5 lg:px-8">
          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 py-8">
@@ -6,20 +6,23 @@
                     <h1 class="text-[30px] font-medium text-[#111] leading-tight">Dashboard</h1>
                     <p class="text-[16px] text-[#666] mt-2">Welcome back, {{ $user->first_name }} {{ $user->last_name }}</p>
                 </div>
-                <a href="{{ route('adverts.create') }}" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 h-12 px-7 rounded-xl bg-black text-white text-[16px] font-semibold no-underline hover:bg-[#161616]">
-                    <span>+</span>
-                    <span>New Listing</span>
-                </a>
+                @if($user->isTradeSeller() && $tradeUsage && !$tradeUsage['can_create'])
+                    <button type="button" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 h-12 px-7 rounded-xl bg-[#d9d9d9] text-[#666] text-[16px] font-semibold cursor-not-allowed" title="Trade advert limit reached">
+                        <span>+</span>
+                        <span>New Listing</span>
+                    </button>
+                @else
+                    <a href="{{ route('adverts.create') }}" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 h-12 px-7 rounded-xl bg-black text-white text-[16px] font-semibold no-underline hover:bg-[#161616]">
+                        <span>+</span>
+                        <span>New Listing</span>
+                    </a>
+                @endif
             </div>
         </div>
     </section>
     <section class="py-8">
         <div class="site-container px-5 lg:px-8">
-           
-
-            @if(session('success'))
-                <div class="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-[14px] text-green-800">{{ session('success') }}</div>
-            @endif
+            <x-flash-messages class="mb-6" />
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-8">
                 <div class="rounded-2xl border border-[#dddddd] bg-white p-6 flex items-center justify-between">
@@ -42,8 +45,13 @@
                 </div>
                 <div class="rounded-2xl border border-[#dddddd] bg-white p-6 flex items-center justify-between">
                     <div>
-                        <div class="text-[14px] text-[#666]">Active Listings</div>
-                        <div class="text-[24px] font-semibold leading-none mt-2">{{ $stats['active'] }}</div>
+                        <div class="text-[14px] text-[#666]">{{ $user->isTradeSeller() && $tradeUsage ? 'Available Listings' : 'Active Listings' }}</div>
+                        <div class="text-[24px] font-semibold leading-none mt-2">{{ $user->isTradeSeller() && $tradeUsage ? $tradeUsage['available_display'] : $stats['active'] }}</div>
+                        @if($user->isTradeSeller() && $tradeUsage)
+                            <div class="text-[12px] text-[#888] mt-2">
+                                {{ $tradeUsage['unlimited'] ? 'Unlimited trade plan' : "{$tradeUsage['active_count']} used of {$tradeUsage['max']}" }}
+                            </div>
+                        @endif
                     </div>
                     <span class="w-10 h-10 rounded-full bg-[#f1ecd9] text-[#a5832f] flex items-center justify-center">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10"/></svg>
@@ -142,7 +150,9 @@
                                             </form>
                                             <form method="POST" action="{{ route('adverts.pause', $advert) }}">
                                                 @csrf @method('PATCH')
-                                                <button type="submit" class="w-full text-left px-4 py-3 text-[16px] text-[#222] hover:bg-[#eeeeee]">Archive</button>
+                                                <button type="submit" class="w-full text-left px-4 py-3 text-[16px] text-[#222] hover:bg-[#eeeeee]">
+                                                    {{ $advert->status === \App\Models\Advert::STATUS_ACTIVE ? 'Put on Hold' : 'Resume Listing' }}
+                                                </button>
                                             </form>
                                             <form method="POST" action="{{ route('adverts.destroy', $advert) }}">
                                                 @csrf @method('DELETE')
@@ -163,7 +173,12 @@
                 </div>
             @elseif($tab === 'profile')
                 <div class="mt-8 rounded-2xl border border-[#d9d9d9] bg-white p-6">
-                    <h2 class="text-[22px] font-semibold text-[#111] mb-6">Profile Details</h2>
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-[22px] font-semibold text-[#111]">Profile Details</h2>
+                        @if(auth()->user()->isPrivateSeller())
+                            <a href="{{ route('seller.trade.packages') }}" class="h-10 px-6 rounded-xl bg-[#d4b160] text-[#111] text-[14px] font-semibold no-underline flex items-center hover:bg-[#c5a350]">Become a Trade Seller</a>
+                        @endif
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-[14px]">
                         <div><span class="text-[#666]">First Name:</span> <span class="text-[#111] font-medium">{{ $user->first_name }}</span></div>
                         <div><span class="text-[#666]">Last Name:</span> <span class="text-[#111] font-medium">{{ $user->last_name }}</span></div>

@@ -1,6 +1,7 @@
 <x-main-layout>
     <section class="bg-[#f3f3f3] py-10">
         <div class="site-container px-5 lg:px-8">
+            <x-flash-messages class="mb-6" />
             <x-auth-session-status class="mb-6" :status="session('status')" />
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

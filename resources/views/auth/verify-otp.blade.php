@@ -7,6 +7,7 @@
                     Enter the 6-digit OTP sent to <strong>{{ $email }}</strong>. OTP is valid for 5 minutes.
                 </p>
 
+                <x-flash-messages class="mb-4" />
                 <x-auth-session-status class="mb-4" :status="session('status')" />
 
                 <form method="POST" action="{{ route('password.otp.verify') }}" class="space-y-5">
@@ -30,4 +31,3 @@
         </div>
     </section>
 </x-main-layout>
-
