@@ -71,6 +71,10 @@ class MessageController extends Controller
 
         $conversation->update(['last_message_at' => $message->created_at ?? now()]);
 
+        if ($advert->user) {
+            \Illuminate\Support\Facades\Mail::to($advert->user)->send(new \App\Mail\NewMessageMail($user->name, $advert->title));
+        }
+
         return response()->json([
             'ok' => true,
             'conversation_id' => $conversation->id,
@@ -128,6 +132,11 @@ class MessageController extends Controller
 
         $conversation->update(['last_message_at' => $message->created_at ?? now()]);
 
+        $recipient = $user->id === $conversation->buyer_id ? $conversation->seller : $conversation->buyer;
+        if ($recipient) {
+            \Illuminate\Support\Facades\Mail::to($recipient)->send(new \App\Mail\NewMessageMail($user->name, $conversation->advert?->title ?? 'Watch Listing'));
+        }
+
         return response()->json([
             'ok' => true,
             'message' => [
@@ -179,6 +188,21 @@ class MessageController extends Controller
             'ok' => true,
             'conversations' => $conversations,
         ]);
+    }
+
+    public function unreadCount(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $count = \App\Models\ConversationMessage::query()
+            ->whereHas('conversation', function ($query) use ($user) {
+                $query->where('buyer_id', $user->id)
+                    ->orWhere('seller_id', $user->id);
+            })
+            ->where('sender_id', '!=', $user->id)
+            ->whereNull('read_at')
+            ->count();
+
+        return response()->json(['ok' => true, 'count' => $count]);
     }
 
     private function isParticipant(Conversation $conversation, int $userId): bool

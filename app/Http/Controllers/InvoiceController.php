@@ -17,9 +17,7 @@ class InvoiceController extends Controller
         $order->loadMissing(['level', 'user']);
 
         $companyName = SiteSetting::getValue('invoice_company_name', 'WatchMarket');
-        $vatNumber = SiteSetting::getValue('invoice_vat_number', '--');
         $registeredAddress = SiteSetting::getValue('invoice_registered_address', '--');
-        $vatRate = (float) (SiteSetting::getValue('invoice_vat_rate', '20') ?? 20);
         $billingDetails = trim((string) ($order->billing_details ?: $this->fallbackBilling($order)));
         $invoiceDate = $order->ordered_at?->format('F j, Y') ?? $order->created_at?->format('F j, Y') ?? now()->format('F j, Y');
         $item = trim(($order->level?->name ?? 'Membership Package') . ' - ' . $this->singleLine($order->level?->description ?: ''));
@@ -27,14 +25,12 @@ class InvoiceController extends Controller
 
         $pdf = $this->buildStyledInvoicePdf(
             companyName: $companyName,
-            vatNumber: $vatNumber,
             registeredAddress: $registeredAddress,
             order: $order,
             invoiceDate: $invoiceDate,
             billingDetails: $billingDetails,
             item: $item,
-            total: $total,
-            vatRate: $vatRate
+            total: $total
         );
         $fileName = 'invoice-' . ($order->code ?: $order->id) . '.pdf';
 
@@ -69,14 +65,12 @@ class InvoiceController extends Controller
 
     private function buildStyledInvoicePdf(
         string $companyName,
-        string $vatNumber,
         string $registeredAddress,
         MembershipOrder $order,
         string $invoiceDate,
         string $billingDetails,
         string $item,
-        string $total,
-        float $vatRate
+        string $total
     ): string {
         $pdf = new SimplePdf();
         $left = 45.0;
@@ -86,10 +80,6 @@ class InvoiceController extends Controller
 
         $pdf->text($left, $y, $companyName, 36, true);
         $y -= 42;
-
-        $pdf->text($left, $y, 'VAT number:', 15, true);
-        $pdf->text(260, $y, $vatNumber, 15, false);
-        $y -= 30;
 
         $pdf->text($left, $y, 'Registered Address:', 15, true);
         foreach (explode("\n", wordwrap($registeredAddress, 36, "\n", true)) as $line) {
@@ -132,7 +122,6 @@ class InvoiceController extends Controller
 
         $row3Y = $row2Y - 48;
         $pdf->text($left + 8, $row3Y, 'Total', 18, true);
-        $pdf->text($left + 8, $row3Y - 20, '(VAT included at ' . rtrim(rtrim(number_format($vatRate, 2), '0'), '.') . '%)', 12, true);
         $pdf->text($right - 8, $row3Y - 6, '£' . $total, 18, true, 'right');
         $pdf->line($left, $row3Y - 30, $right, $row3Y - 30);
 

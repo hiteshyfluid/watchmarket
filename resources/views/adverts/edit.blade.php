@@ -256,7 +256,7 @@
                             <div class="mt-6 border border-[#d8d8d8] rounded-xl p-5 space-y-5 bg-[#fafafa]">
                                 <div>
                                     <label class="block text-[16px] font-semibold text-[#111] mb-2">Asking Price (&pound;) *</label>
-                                    <input type="number" name="price" id="price-input" value="{{ old('price', $advert->price) }}" step="0.01" min="{{ $privatePriceRange['min'] ?? 0 }}" @if($privatePriceRange) max="{{ $privatePriceRange['max'] }}" @endif required class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                    <input type="number" name="price" id="price-input" value="{{ old('price', $advert->price) }}" step="0.01" min="{{ $privatePriceRange['min'] ?? 0 }}" @if($privatePriceRange) max="{{ $privatePriceRange['max'] }}" @else max="999999" @endif required class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                                     @if($privatePriceRange)
                                         <p class="text-[13px] text-amber-700 mt-2">Allowed pricing for this advert: &pound;{{ number_format($privatePriceRange['min'], 2) }} to &pound;{{ number_format($privatePriceRange['max'], 2) }}</p>
                                     @endif
@@ -400,6 +400,13 @@
                                 alert(`You can set pricing only between £${minPrice.toFixed(2)} and £${maxPrice.toFixed(2)} for this package.`);
                                 return false;
                             }
+                        @else
+                            const currentPrice = parseFloat(price?.value || '0');
+                            if (currentPrice > 999999) {
+                                price?.focus();
+                                alert('Price cannot exceed £999,999');
+                                return false;
+                            }
                         @endif
                     }
 
@@ -430,6 +437,14 @@
                 const currentPrice = parseFloat(priceInput?.value || '0');
                 if (currentPrice < minPrice || currentPrice > maxPrice) {
                     alert(`You can set pricing only between £${minPrice.toFixed(2)} and £${maxPrice.toFixed(2)} for this package.`);
+                    e.preventDefault();
+                    return;
+                }
+            @else
+                const priceInput = document.getElementById('price-input');
+                const currentPrice = parseFloat(priceInput?.value || '0');
+                if (currentPrice > 999999) {
+                    alert('Price cannot exceed £999,999');
                     e.preventDefault();
                     return;
                 }

@@ -25,6 +25,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/messages', [App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
     Route::post('/adverts/{advert}/enquire', [App\Http\Controllers\MessageController::class, 'sendFromEnquiry'])->name('messages.enquire');
     Route::get('/messages/list', [App\Http\Controllers\MessageController::class, 'list'])->name('messages.list');
+    Route::get('/messages/unread-count', [App\Http\Controllers\MessageController::class, 'unreadCount'])->name('messages.unread-count');
     Route::get('/messages/{conversation}/items', [App\Http\Controllers\MessageController::class, 'messages'])->name('messages.items');
     Route::post('/messages/{conversation}/items', [App\Http\Controllers\MessageController::class, 'storeMessage'])->name('messages.items.store');
     Route::get('/invoices/{order}/pdf', [App\Http\Controllers\InvoiceController::class, 'download'])

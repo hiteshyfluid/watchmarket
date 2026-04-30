@@ -74,7 +74,7 @@ class AdvertController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
+            'price' => 'required|numeric|min:0|max:999999',
             'status' => 'required|in:draft,active,paused,sold,expired',
             'is_featured' => 'nullable|boolean',
         ]);

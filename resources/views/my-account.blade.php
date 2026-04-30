@@ -75,7 +75,6 @@
                         'profile' => 'Profile',
                         'edit-profile' => 'Edit Profile',
                         'invoices' => 'Invoices',
-                        'settings' => 'Settings',
                     ];
                     if (auth()->user()->isTradeSeller()) {
                         $tabs = array_slice($tabs, 0, 3, true) + ['subscriptions' => 'My Subscriptions'] + array_slice($tabs, 3, null, true);
@@ -306,11 +305,6 @@
                     @if($orders->hasPages())
                         <div class="mt-4">{{ $orders->links() }}</div>
                     @endif
-                </div>
-            @else
-                <div class="mt-8 rounded-2xl border border-[#d9d9d9] bg-white p-6">
-                    <h2 class="text-[32px] font-semibold text-[#111] mb-4">Settings</h2>
-                    <p class="text-[16px] text-[#666]">Settings panel will be expanded here.</p>
                 </div>
             @endif
         </div>

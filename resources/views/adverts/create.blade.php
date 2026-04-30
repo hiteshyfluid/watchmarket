@@ -309,7 +309,7 @@
                         <div class="mt-6 border border-[#d8d8d8] rounded-xl p-5 space-y-5 bg-[#fafafa]">
                             <div>
                                 <label class="block text-[16px] font-semibold text-[#111] mb-2">Asking Price (£) *</label>
-                                <input type="number" name="price" value="{{ old('price') }}" step="0.01" min="0" required placeholder="e.g., 8500" class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                <input type="number" name="price" value="{{ old('price') }}" step="0.01" min="0" max="999999" required placeholder="e.g., 8500" class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                             </div>
 
                             <div class="space-y-3 border-b border-[#e2e2e2] pb-5">
@@ -499,6 +499,14 @@
                             if (el && !String(el.value || '').trim()) {
                                 el.focus?.();
                                 return false;
+                            }
+                            if (name === 'price' && el) {
+                                const val = parseFloat(el.value || 0);
+                                if (val > 999999) {
+                                    el.focus?.();
+                                    alert('Price cannot exceed £999,999');
+                                    return false;
+                                }
                             }
                         }
                     }

@@ -11,7 +11,7 @@
 
 <header
     class="bg-white border-b border-[#e8e8e8]"
-    x-data="{ buyOpen: false, mobileMenuOpen: false, mobileBrandsOpen: false }"
+    x-data="headerMenu()"
     @keydown.escape.window="buyOpen = false; mobileMenuOpen = false; mobileBrandsOpen = false"
 >
     <div class="site-container px-4 lg:px-8">
@@ -80,8 +80,9 @@
                 <a href="{{ route('market.index') }}" class="hidden lg:flex w-10 h-10 rounded-full items-center justify-center text-[#222] hover:bg-[#f5f5f5]" aria-label="Search">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </a>
-                <a href="{{ auth()->check() ? route('messages.index') : route('login') }}" class="hidden lg:flex w-10 h-10 rounded-full items-center justify-center text-[#222] hover:bg-[#f5f5f5]" aria-label="Messages">
+                <a href="{{ auth()->check() ? route('messages.index') : route('login') }}" class="relative hidden lg:flex w-10 h-10 rounded-full items-center justify-center text-[#222] hover:bg-[#f5f5f5]" aria-label="Messages">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg>
+                    <span x-cloak x-show="unreadCount > 0" class="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 border-2 border-white rounded-full"></span>
                 </a>
 
                 @auth
@@ -121,9 +122,6 @@
                                     <svg class="w-5 h-5 text-[#222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg>
                                     <span class="text-[16px]">Messages</span>
                                 </a>
-                                <a href="{{ route('my-account', ['tab' => 'settings']) }}" class="px-5 py-2.5 flex items-center gap-3 no-underline text-[#222] hover:bg-[#efefef]">
-                                    <svg class="w-5 h-5 text-[#222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317a1 1 0 011.35-.936l.4.17a1 1 0 00.79 0l.4-.17a1 1 0 011.35.936l.035.433a1 1 0 00.497.786l.374.216a1 1 0 01.364 1.364l-.216.374a1 1 0 000 .79l.216.374a1 1 0 01-.364 1.364l-.374.216a1 1 0 00-.497.786l-.035.433a1 1 0 01-1.35.936l-.4-.17a1 1 0 00-.79 0l-.4.17a1 1 0 01-1.35-.936l-.035-.433a1 1 0 00-.497-.786l-.374-.216a1 1 0 01-.364-1.364l.216-.374a1 1 0 000-.79l-.216-.374a1 1 0 01.364-1.364l.374-.216a1 1 0 00.497-.786l.035-.433z"/><circle cx="12" cy="8.5" r="2.2" stroke-width="1.8"/></svg>
-                                    <span class="text-[16px]">Settings</span>
                                 </a>
                             </div>
 
@@ -261,9 +259,6 @@
                                 <svg class="w-5 h-5 text-[#222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg>
                                 <span class="text-[15px]">Messages</span>
                             </a>
-                            <a href="{{ route('my-account', ['tab' => 'settings']) }}" class="flex items-center gap-3 rounded-xl px-3 py-3 no-underline text-[#222] hover:bg-[#f3f3f3]">
-                                <svg class="w-5 h-5 text-[#222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317a1 1 0 011.35-.936l.4.17a1 1 0 00.79 0l.4-.17a1 1 0 011.35.936l.035.433a1 1 0 00.497.786l.374.216a1 1 0 01.364 1.364l-.216.374a1 1 0 000 .79l.216.374a1 1 0 01-.364 1.364l-.374.216a1 1 0 00-.497.786l-.035.433a1 1 0 01-1.35.936l-.4-.17a1 1 0 00-.79 0l-.4.17a1 1 0 01-1.35-.936l-.035-.433a1 1 0 00-.497-.786l-.374-.216a1 1 0 01-.364-1.364l.216-.374a1 1 0 000-.79l-.216-.374a1 1 0 01.364-1.364l.374-.216a1 1 0 00.497-.786l.035-.433z"/><circle cx="12" cy="8.5" r="2.2" stroke-width="1.8"/></svg>
-                                <span class="text-[15px]">Settings</span>
                             </a>
                         </div>
 
@@ -290,3 +285,74 @@
         </div>
     </div>
 </header>
+
+<div x-cloak x-data="{}" x-show="document.querySelector('header').__x.$data.unreadToast"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+     x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+     x-transition:leave="transition ease-in duration-100"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed bottom-4 right-4 z-50 flex max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+    <div class="p-4">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z" />
+                </svg>
+            </div>
+            <div class="ml-3 w-0 flex-1 pt-0.5">
+                <p class="text-sm font-medium text-gray-900">New Message</p>
+                <p class="mt-1 text-sm text-gray-500">You have received a new message.</p>
+                <div class="mt-3 flex space-x-7">
+                    <a href="{{ route('messages.index') }}" class="rounded-md bg-white text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">View</a>
+                </div>
+            </div>
+            <div class="ml-4 flex flex-shrink-0">
+                <button type="button" @click="document.querySelector('header').__x.$data.unreadToast = false" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function headerMenu() {
+        return {
+            buyOpen: false,
+            mobileMenuOpen: false,
+            mobileBrandsOpen: false,
+            unreadCount: 0,
+            unreadToast: false,
+            initialCheckDone: false,
+            init() {
+                @auth
+                    this.checkUnread();
+                    setInterval(() => this.checkUnread(), 15000);
+                @endauth
+            },
+            async checkUnread() {
+                try {
+                    const response = await fetch('{{ route('messages.unread-count') }}');
+                    const data = await response.json();
+                    if (data.ok) {
+                        if (this.initialCheckDone && data.count > this.unreadCount && data.count > 0) {
+                            this.unreadToast = true;
+                            setTimeout(() => {
+                                this.unreadToast = false;
+                            }, 5000);
+                        }
+                        this.unreadCount = data.count;
+                        this.initialCheckDone = true;
+                    }
+                } catch (error) {
+                    console.error('Error checking unread messages', error);
+                }
+            }
+        };
+    }
+</script>

@@ -307,7 +307,7 @@ class AdvertController extends Controller
             'model_id'            => 'required|exists:brands,id',
             'reference_number'    => 'nullable|string|max:120',
             'category_id'         => 'nullable|exists:categories,id',
-            'price'               => 'required|numeric|min:0',
+            'price'               => 'required|numeric|min:0|max:999999',
             'price_negotiable'    => 'nullable|boolean',
             'accept_traders'      => 'nullable|boolean',
             'city'                => $isCreate ? 'required|string|max:255' : 'nullable|string|max:255',
