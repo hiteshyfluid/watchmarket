@@ -299,7 +299,7 @@ class SellerController extends Controller
             return $resolvedOrder;
         }
 
-        $resolvedOrder->load(['level', 'user']);
+        $resolvedOrder->load(['level', 'user', 'advert']);
 
         return view('seller.private-thank-you', ['order' => $resolvedOrder]);
     }

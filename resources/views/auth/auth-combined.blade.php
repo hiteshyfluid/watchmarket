@@ -13,21 +13,21 @@
 
                         <div>
                             <label for="login_email" class="block text-[14px] text-[#1d1d1d] mb-2">Username or email address <span class="text-red-500">*</span></label>
-                            <input id="login_email" type="email" name="email" value="{{ old('email') }}" required autofocus
+                            <input id="login_email" type="email" name="login_email" value="{{ old('login_email') }}" required autofocus
                                 class="w-full h-11 border border-[#cfcfcf] bg-[#f7f7f7] px-4 text-[16px] focus:outline-none focus:ring-1 focus:ring-black">
-                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('login_email')" class="mt-2" />
                         </div>
 
                         <div>
                             <label for="login_password" class="block text-[14px] text-[#1d1d1d] mb-2">Password <span class="text-red-500">*</span></label>
                             <div class="relative">
-                                <input id="login_password" type="password" name="password" required
+                                <input id="login_password" type="password" name="login_password" required
                                     class="w-full h-11 border border-[#cfcfcf] bg-[#f7f7f7] px-4 pr-11 text-[16px] focus:outline-none focus:ring-1 focus:ring-black">
                                 <button type="button" data-toggle-password="login_password" class="absolute inset-y-0 right-0 w-11 flex items-center justify-center text-[#888]" aria-label="Toggle password">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/><circle cx="12" cy="12" r="3" stroke-width="1.8"></circle></svg>
                                 </button>
                             </div>
-                            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('login_password')" class="mt-2" />
                         </div>
 
                         <label class="inline-flex items-center gap-3 text-[14px] text-[#555]">

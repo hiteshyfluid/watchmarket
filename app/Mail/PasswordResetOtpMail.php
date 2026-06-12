@@ -18,8 +18,7 @@ class PasswordResetOtpMail extends Mailable
 
     public function build(): self
     {
-        return $this->subject('Your Password Reset OTP')
+        return $this->subject('Watch Market Password Reset OTP')
             ->view('emails.password-reset-otp');
     }
 }
-

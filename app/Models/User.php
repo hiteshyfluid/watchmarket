@@ -103,6 +103,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return "{$this->first_name} {$this->last_name}";
     }
 
+    public function roleLabel(): string
+    {
+        return match ($this->role) {
+            self::ROLE_ADMIN => 'Administrator',
+            self::ROLE_PRIVATE_SELLER => 'Private Seller',
+            self::ROLE_TRADE_SELLER => 'Trade Seller',
+            default => 'Customer',
+        };
+    }
+
     public function tradeAdvertUsage(): ?array
     {
         if (!$this->isTradeSeller()) {

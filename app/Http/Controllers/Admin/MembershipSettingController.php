@@ -13,7 +13,7 @@ class MembershipSettingController extends Controller
     public function edit()
     {
         $settings = [
-            'invoice_company_name' => SiteSetting::getValue('invoice_company_name', 'WatchMarket'),
+            'invoice_company_name' => SiteSetting::getValue('invoice_company_name', 'Watch Market'),
             'invoice_vat_number' => SiteSetting::getValue('invoice_vat_number', ''),
             'invoice_registered_address' => SiteSetting::getValue('invoice_registered_address', ''),
             'invoice_vat_rate' => SiteSetting::getValue('invoice_vat_rate', '20'),

@@ -5,6 +5,11 @@
                 <div>
                     <h1 class="text-[30px] font-medium text-[#111] leading-tight">Dashboard</h1>
                     <p class="text-[16px] text-[#666] mt-2">Welcome back, {{ $user->first_name }} {{ $user->last_name }}</p>
+                    <div class="mt-3">
+                        <span class="inline-flex items-center rounded-full border px-3 py-1 text-[13px] font-semibold {{ $user->isTradeSeller() ? 'border-[#e4d2a1] bg-[#f6efe0] text-[#8c6a22]' : ($user->isPrivateSeller() ? 'border-[#cfd8e3] bg-[#eef3f8] text-[#35516f]' : 'border-[#dddddd] bg-white text-[#555]') }}">
+                            {{ $user->roleLabel() }}
+                        </span>
+                    </div>
                 </div>
                 @if($user->isTradeSeller() && $tradeUsage && !$tradeUsage['can_create'])
                     <button type="button" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 h-12 px-7 rounded-xl bg-[#d9d9d9] text-[#666] text-[16px] font-semibold cursor-not-allowed" title="Trade advert limit reached">
@@ -187,7 +192,7 @@
                         <div><span class="text-[#666]">City:</span> <span class="text-[#111] font-medium">{{ $user->city ?: '-' }}</span></div>
                         <div><span class="text-[#666]">Postal Code:</span> <span class="text-[#111] font-medium">{{ $user->postal_code ?: '-' }}</span></div>
                         <div><span class="text-[#666]">Country:</span> <span class="text-[#111] font-medium">{{ $user->country ?: '-' }}</span></div>
-                        <div><span class="text-[#666]">Account Type:</span> <span class="text-[#111] font-medium capitalize">{{ str_replace('_', ' ', $user->role) }}</span></div>
+                        <div><span class="text-[#666]">Account Type:</span> <span class="text-[#111] font-medium">{{ $user->roleLabel() }}</span></div>
                     </div>
                 </div>
             @elseif($tab === 'edit-profile')

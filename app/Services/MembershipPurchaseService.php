@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\AdvertActivatedMail;
 use App\Models\Advert;
 use App\Models\MembershipLevel;
 use App\Models\MembershipOrder;
@@ -9,8 +10,10 @@ use App\Models\MembershipSubscription;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 
 class MembershipPurchaseService
 {
@@ -90,7 +93,9 @@ class MembershipPurchaseService
 
     public function completeOrder(MembershipOrder $order, array $paymentDetails = []): MembershipOrder
     {
-        return DB::transaction(function () use ($order, $paymentDetails) {
+        $sendAdvertActivationEmail = false;
+
+        $completedOrder = DB::transaction(function () use ($order, $paymentDetails, &$sendAdvertActivationEmail) {
             /** @var MembershipOrder $lockedOrder */
             $lockedOrder = MembershipOrder::query()
                 ->with(['level', 'user', 'advert', 'subscription'])
@@ -114,10 +119,17 @@ class MembershipPurchaseService
                 $this->activateTradeOrder($lockedOrder, $orderedAt, $paymentDetails);
             } else {
                 $this->activatePrivateOrder($lockedOrder, $orderedAt, $paymentDetails);
+                $sendAdvertActivationEmail = true;
             }
 
             return $lockedOrder->fresh(['level', 'user', 'advert', 'subscription']);
         });
+
+        if ($sendAdvertActivationEmail) {
+            $this->sendPrivateAdvertActivationEmail($completedOrder);
+        }
+
+        return $completedOrder;
     }
 
     public function feeLabel(MembershipLevel $level): string
@@ -240,5 +252,18 @@ class MembershipPurchaseService
             $billingData['country'] . "\n" .
             $billingData['postal_code']
         );
+    }
+
+    private function sendPrivateAdvertActivationEmail(MembershipOrder $order): void
+    {
+        if (!$order->user || !$order->advert || !$order->user->email) {
+            return;
+        }
+
+        try {
+            Mail::to($order->user)->send(new AdvertActivatedMail($order));
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 }

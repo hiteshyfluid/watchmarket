@@ -10,5 +10,5 @@ View Message
 </x-mail::button>
 
 Thanks,<br>
-{{ config('app.name') }}
+Watch Market
 </x-mail::message>

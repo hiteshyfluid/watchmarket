@@ -7,6 +7,8 @@
     $brandColumnSplit = (int) ceil($popularMenuBrands->count() / 2);
     $popularBrandsLeft = $popularMenuBrands->take($brandColumnSplit);
     $popularBrandsRight = $popularMenuBrands->slice($brandColumnSplit);
+    $authUser = auth()->user();
+    $accountLabel = $authUser && $authUser->isSeller() ? $authUser->roleLabel() : 'My Account';
 @endphp
 
 <header
@@ -90,10 +92,11 @@
                         <button
                             type="button"
                             @click="open = !open"
-                            class="w-10 h-10 rounded-full flex items-center justify-center bg-[#f5f5f5] text-[#222] hover:bg-[#ececec]"
+                            class="h-10 rounded-full border px-4 inline-flex items-center gap-2 text-[13px] font-semibold {{ $authUser->isTradeSeller() ? 'border-[#e4d2a1] bg-[#f6efe0] text-[#8c6a22] hover:bg-[#f2e8d2]' : ($authUser->isPrivateSeller() ? 'border-[#cfd8e3] bg-[#eef3f8] text-[#35516f] hover:bg-[#e7eef5]' : 'border-[#e5e5e5] bg-[#f7f7f7] text-[#444] hover:bg-[#efefef]') }}"
                             aria-label="Account menu"
                         >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <span>{{ $accountLabel }}</span>
                         </button>
 
                         <div
@@ -105,8 +108,13 @@
                             class="absolute right-0 mt-3 w-72 bg-[#f7f7f7] border border-[#d8d8d8] rounded-xl shadow-[0_18px_35px_rgba(0,0,0,0.14)] overflow-hidden z-50"
                         >
                             <div class="px-5 py-4 border-b border-[#e3e3e3]">
-                                <div class="text-[18px] font-semibold text-[#222]">{{ auth()->user()->name }}</div>
-                                <div class="text-[14px] text-[#6a6a6a]">{{ auth()->user()->email }}</div>
+                                <div class="text-[18px] font-semibold text-[#222]">{{ $authUser->name }}</div>
+                                <div class="text-[14px] text-[#6a6a6a]">{{ $authUser->email }}</div>
+                                <div class="mt-3">
+                                    <span class="inline-flex items-center rounded-full border px-3 py-1 text-[12px] font-semibold {{ $authUser->isTradeSeller() ? 'border-[#e4d2a1] bg-[#f6efe0] text-[#8c6a22]' : ($authUser->isPrivateSeller() ? 'border-[#cfd8e3] bg-[#eef3f8] text-[#35516f]' : 'border-[#e5e5e5] bg-white text-[#555]') }}">
+                                        {{ $authUser->roleLabel() }}
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="py-2">
@@ -242,8 +250,13 @@
                 @auth
                     <div class="rounded-2xl border border-[#e7e7e7] bg-white overflow-hidden">
                         <div class="px-4 py-4 border-b border-[#ececec]">
-                            <div class="text-[17px] font-semibold text-[#111]">{{ auth()->user()->name }}</div>
-                            <div class="text-[14px] text-[#6a6a6a] break-all">{{ auth()->user()->email }}</div>
+                            <div class="text-[17px] font-semibold text-[#111]">{{ $authUser->name }}</div>
+                            <div class="text-[14px] text-[#6a6a6a] break-all">{{ $authUser->email }}</div>
+                            <div class="mt-3">
+                                <span class="inline-flex items-center rounded-full border px-3 py-1 text-[12px] font-semibold {{ $authUser->isTradeSeller() ? 'border-[#e4d2a1] bg-[#f6efe0] text-[#8c6a22]' : ($authUser->isPrivateSeller() ? 'border-[#cfd8e3] bg-[#eef3f8] text-[#35516f]' : 'border-[#e5e5e5] bg-white text-[#555]') }}">
+                                    {{ $authUser->roleLabel() }}
+                                </span>
+                            </div>
                         </div>
 
                         <div class="p-2">

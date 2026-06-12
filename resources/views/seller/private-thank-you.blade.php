@@ -12,9 +12,15 @@
             <div class="text-center mb-12">
                 <h2 class="text-5xl font-bold text-gray-900">Your advert is now active!</h2>
                 <p class="mt-6 text-xl text-gray-600">Thank you for your purchase.</p>
-                <a href="{{ route('adverts.index') }}" class="inline-block mt-8 text-black font-semibold border-b border-black no-underline">
-                    View my adverts
-                </a>
+                @if($order->advert)
+                    <a href="{{ route('market.show', $order->advert) }}" class="inline-block mt-8 text-black font-semibold border-b border-black no-underline">
+                        View Advert
+                    </a>
+                @else
+                    <a href="{{ route('adverts.index') }}" class="inline-block mt-8 text-black font-semibold border-b border-black no-underline">
+                        View my adverts
+                    </a>
+                @endif
             </div>
 
             <div class="bg-gray-50 border rounded p-8">
@@ -22,6 +28,7 @@
 
                 <ul class="list-disc pl-6 text-gray-700 space-y-1 mb-8">
                     <li>Account: {{ $order->user?->name }} ({{ $order->user?->email }})</li>
+                    <li>Advert: {{ $order->advert?->title ?? '-' }}</li>
                     <li>Package: {{ $order->level?->name ?? '-' }}</li>
                     <li>Order Code: {{ $order->code }}</li>
                 </ul>

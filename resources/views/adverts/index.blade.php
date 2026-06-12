@@ -17,6 +17,11 @@
                     <h2 class="text-xl font-bold text-gray-800">
                         Adverts <span class="text-gray-400 font-normal text-base">({{ $adverts->total() }})</span>
                     </h2>
+                    <div class="mt-2">
+                        <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold {{ auth()->user()->isTradeSeller() ? 'border-[#e4d2a1] bg-[#f6efe0] text-[#8c6a22]' : (auth()->user()->isPrivateSeller() ? 'border-[#cfd8e3] bg-[#eef3f8] text-[#35516f]' : 'border-gray-200 bg-gray-50 text-gray-600') }}">
+                            {{ auth()->user()->roleLabel() }}
+                        </span>
+                    </div>
                     @if(!empty($tradeUsage))
                     <p class="text-sm text-gray-500 mt-1">
                         Available listings:
