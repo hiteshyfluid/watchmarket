@@ -15,6 +15,11 @@ Route::get('/sell-watch', [App\Http\Controllers\SellerController::class, 'index'
 Route::get('/pricing', [App\Http\Controllers\SellerController::class, 'pricing'])->name('seller.pricing');
 Route::post('/stripe/webhook', [App\Http\Controllers\StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
+Route::get('/contact-us', [App\Http\Controllers\ContactController::class, 'show'])->name('contact.show');
+Route::post('/contact-us', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
+Route::get('/terms-conditions', [App\Http\Controllers\PageController::class, 'terms'])->name('pages.terms');
+Route::get('/privacy-policy', [App\Http\Controllers\PageController::class, 'privacy'])->name('pages.privacy');
+
 // ----------------------------------------------------------------
 // Authenticated (all roles)
 // ----------------------------------------------------------------
@@ -125,6 +130,12 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\AdminMiddleware::clas
             ->name('seo.index');
         Route::post('/seo-meta', [App\Http\Controllers\Admin\SeoMetaController::class, 'update'])
             ->name('seo.update');
+
+        Route::get('/pages/{page:slug}/edit', [App\Http\Controllers\Admin\PageController::class, 'edit'])->name('pages.edit');
+        Route::put('/pages/{page:slug}', [App\Http\Controllers\Admin\PageController::class, 'update'])->name('pages.update');
+
+        Route::get('/contact-settings', [App\Http\Controllers\Admin\ContactSettingController::class, 'edit'])->name('contact-settings.edit');
+        Route::put('/contact-settings', [App\Http\Controllers\Admin\ContactSettingController::class, 'update'])->name('contact-settings.update');
     });
 
 require __DIR__.'/auth.php';

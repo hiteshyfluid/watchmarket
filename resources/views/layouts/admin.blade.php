@@ -152,6 +152,37 @@
                     @endforeach
                 </div>
             </div>
+
+            {{-- SITE PAGES section --}}
+            <div x-data="{ open: {{ request()->routeIs('admin.pages.*') || request()->routeIs('admin.contact-settings.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 text-left"
+                    x-show="sidebarOpen">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-7 4h8a2 2 0 002-2V8a2 2 0 00-.586-1.414l-4-4A2 2 0 0011 2H6a2 2 0 00-2 2v16a2 2 0 002 2z"/></svg>
+                    <span class="flex-1 whitespace-nowrap font-medium">Site Pages</span>
+                    <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+
+                <a href="{{ route('admin.contact-settings.edit') }}" x-show="!sidebarOpen"
+                   class="flex items-center justify-center px-3 py-2 rounded hover:bg-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-7 4h8a2 2 0 002-2V8a2 2 0 00-.586-1.414l-4-4A2 2 0 0011 2H6a2 2 0 00-2 2v16a2 2 0 002 2z"/></svg>
+                </a>
+
+                <div x-show="open && sidebarOpen" class="ml-8 mt-1 space-y-1">
+                    <a href="{{ route('admin.contact-settings.edit') }}"
+                       class="flex items-center gap-2 px-3 py-1.5 rounded text-xs hover:bg-gray-700 hover:text-white {{ request()->routeIs('admin.contact-settings.*') ? 'text-white' : 'text-gray-400' }}">
+                        Contact Settings
+                    </a>
+                    <a href="{{ route('admin.pages.edit', \App\Models\Page::SLUG_TERMS) }}"
+                       class="flex items-center gap-2 px-3 py-1.5 rounded text-xs hover:bg-gray-700 hover:text-white {{ request()->routeIs('admin.pages.*') && request()->route('page')?->slug === \App\Models\Page::SLUG_TERMS ? 'text-white' : 'text-gray-400' }}">
+                        Terms & Conditions
+                    </a>
+                    <a href="{{ route('admin.pages.edit', \App\Models\Page::SLUG_PRIVACY) }}"
+                       class="flex items-center gap-2 px-3 py-1.5 rounded text-xs hover:bg-gray-700 hover:text-white {{ request()->routeIs('admin.pages.*') && request()->route('page')?->slug === \App\Models\Page::SLUG_PRIVACY ? 'text-white' : 'text-gray-400' }}">
+                        Privacy Policy
+                    </a>
+                </div>
+            </div>
         </nav>
 
         {{-- Toggle button --}}

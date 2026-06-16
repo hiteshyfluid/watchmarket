@@ -34,7 +34,7 @@
                 <ul class="space-y-3 text-[14px]">
                     <li><a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Help Centre</a></li>
                     <li><a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Safety Tips</a></li>
-                    <li><a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Contact Us</a></li>
+                    <li><a href="{{ route('contact.show') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Contact Us</a></li>
                     <li><a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Report a Listing</a></li>
                 </ul>
             </div>
@@ -43,8 +43,8 @@
         <div class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-[14px] text-center md:text-left">
             <div class="text-[#b8b8b8]">&copy; {{ now()->year }} WatchMarket. All rights reserved.</div>
             <div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-                <a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Privacy Policy</a>
-                <a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Terms of Service</a>
+                <a href="{{ route('pages.privacy') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Privacy Policy</a>
+                <a href="{{ route('pages.terms') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Terms of Service</a>
                 <a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Cookie Policy</a>
             </div>
         </div>
