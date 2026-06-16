@@ -17,7 +17,11 @@ class AccountController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $tab = (string) $request->query('tab', 'dashboard');
+        Advert::pauseExpiredForUser($user->id);
+        $tab = (string) $request->query('tab', $user->isCustomer() ? 'profile' : 'dashboard');
+        if ($user->isCustomer() && in_array($tab, ['dashboard', 'invoices'], true)) {
+            $tab = 'profile';
+        }
         $listingFilter = (string) $request->query('listing', 'all');
         $tradeUsage = $user->tradeAdvertUsage();
 
@@ -29,7 +33,8 @@ class AccountController extends Controller
         ];
 
         $listingsQuery = $user->adverts()
-            ->with(['brand', 'model'])
+            ->with(['brand', 'model', 'images'])
+            ->withCount('conversations')
             ->latest();
 
         if ($listingFilter === 'active') {
@@ -43,8 +48,8 @@ class AccountController extends Controller
         $listings = $listingsQuery->paginate(10)->withQueryString();
 
         $stats = [
-            'views' => 0,
-            'enquiries' => 0,
+            'views' => (int) $user->adverts()->sum('views'),
+            'enquiries' => (int) \App\Models\Conversation::whereIn('advert_id', $user->adverts()->pluck('id'))->count(),
             'active' => $statusCounts['active'],
             'sold' => $statusCounts['sold'],
             'available_listings' => $tradeUsage['available_display'] ?? null,

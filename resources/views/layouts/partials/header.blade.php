@@ -75,7 +75,7 @@
                 </div>
 
                 <a href="{{ route('market.index') }}" class="text-[14px] py-2 px-4 inline-flex items-center text-[#1f1f1f] no-underline hover:bg-[#f5f5f5]">Search Watches</a>
-                <a href="{{ route('sell-watch') }}" class="text-[14px] py-2 px-4 inline-flex items-center text-[#1f1f1f] no-underline hover:bg-[#f5f5f5]">Sell A Watch</a>
+                <a href="{{ route('my-account') }}" class="text-[14px] py-2 px-4 inline-flex items-center text-[#1f1f1f] no-underline hover:bg-[#f5f5f5]">Sell A Watch</a>
             </nav>
 
             <div class="flex items-center gap-3">
@@ -84,7 +84,9 @@
                 </a>
                 <a href="{{ auth()->check() ? route('messages.index') : route('login') }}" class="relative hidden lg:flex w-10 h-10 rounded-full items-center justify-center text-[#222] hover:bg-[#f5f5f5]" aria-label="Messages">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg>
-                    <span x-cloak x-show="unreadCount > 0" class="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 border-2 border-white rounded-full"></span>
+                    <span x-cloak x-show="unreadCount > 0"
+                          x-text="unreadCount > 99 ? '99+' : unreadCount"
+                          class="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[22px] h-[22px] px-1 text-[11px] font-bold text-white bg-red-500 border-2 border-white rounded-full shadow-sm leading-none"></span>
                 </a>
 
                 @auth
@@ -149,8 +151,8 @@
                 @endauth
 
                 <a href="{{ route('sell-watch') }}" class="inline-flex items-center justify-center rounded-xl bg-[#d4b160] px-3.5 sm:px-5 h-9 sm:h-10 text-[14px] sm:text-[16px] font-semibold text-[#111] no-underline hover:bg-[#c7a552] whitespace-nowrap">
-                    <span class="sm:hidden">Sell</span>
-                    <span class="hidden sm:inline">Sell Watch</span>
+                    <span class="sm:hidden">Create</span>
+                    <span class="hidden sm:inline">Create Advert</span>
                 </a>
             </div>
         </div>
@@ -238,7 +240,7 @@
                         <span>All Watches</span>
                     </a>
 
-                    <a href="{{ route('seller.trade.packages') }}" class="flex items-center justify-between rounded-2xl px-4 py-3 bg-[#f7f7f7] text-[15px] font-medium text-[#111] no-underline hover:bg-[#efefef]">
+                    <a href="{{ route('seller.pricing') }}" class="flex items-center justify-between rounded-2xl px-4 py-3 bg-[#f7f7f7] text-[15px] font-medium text-[#111] no-underline hover:bg-[#efefef]">
                         <span>Pricing</span>
                     </a>
 
@@ -292,44 +294,40 @@
                 @endauth
 
                 <a href="{{ route('sell-watch') }}" class="inline-flex w-full items-center justify-center rounded-2xl bg-[#d4b160] h-12 text-[15px] font-semibold text-[#111] no-underline hover:bg-[#c7a552]">
-                    Sell Watch
+                    Create Advert
                 </a>
             </div>
         </div>
     </div>
 </header>
 
-<div x-cloak x-data="{}" x-show="document.querySelector('header').__x.$data.unreadToast"
+<div x-data="messageToast()"
+     @show-message-toast.window="show()"
+     x-show="visible"
      x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-     x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
-     x-transition:leave="transition ease-in duration-100"
+     x-transition:enter-start="translate-y-4 opacity-0"
+     x-transition:enter-end="translate-y-0 opacity-100"
+     x-transition:leave="transition ease-in duration-150"
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
-     class="fixed bottom-4 right-4 z-50 flex max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
-    <div class="p-4">
-        <div class="flex items-start">
-            <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z" />
-                </svg>
-            </div>
-            <div class="ml-3 w-0 flex-1 pt-0.5">
-                <p class="text-sm font-medium text-gray-900">New Message</p>
-                <p class="mt-1 text-sm text-gray-500">You have received a new message.</p>
-                <div class="mt-3 flex space-x-7">
-                    <a href="{{ route('messages.index') }}" class="rounded-md bg-white text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">View</a>
-                </div>
-            </div>
-            <div class="ml-4 flex flex-shrink-0">
-                <button type="button" @click="document.querySelector('header').__x.$data.unreadToast = false" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    <span class="sr-only">Close</span>
-                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                    </svg>
-                </button>
-            </div>
+     class="fixed bottom-5 right-5 z-50 w-full max-w-[340px] bg-white rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.15)] ring-1 ring-black/5 overflow-hidden pointer-events-auto"
+     style="display:none">
+    <div class="flex items-start gap-3 p-4">
+        <div class="shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/>
+            </svg>
         </div>
+        <div class="flex-1 min-w-0 pt-0.5">
+            <p class="text-[14px] font-semibold text-[#111]">New Message</p>
+            <p class="text-[13px] text-[#666] mt-0.5">You have a new unread message.</p>
+            <a href="{{ route('messages.index') }}" class="inline-block mt-2 text-[13px] font-semibold text-blue-600 hover:underline no-underline">View Messages &rarr;</a>
+        </div>
+        <button type="button" @click="visible = false" class="shrink-0 text-[#aaa] hover:text-[#555] mt-0.5">
+            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+            </svg>
+        </button>
     </div>
 </div>
 
@@ -340,7 +338,6 @@
             mobileMenuOpen: false,
             mobileBrandsOpen: false,
             unreadCount: 0,
-            unreadToast: false,
             initialCheckDone: false,
             init() {
                 @auth
@@ -354,10 +351,7 @@
                     const data = await response.json();
                     if (data.ok) {
                         if (this.initialCheckDone && data.count > this.unreadCount && data.count > 0) {
-                            this.unreadToast = true;
-                            setTimeout(() => {
-                                this.unreadToast = false;
-                            }, 5000);
+                            window.dispatchEvent(new CustomEvent('show-message-toast'));
                         }
                         this.unreadCount = data.count;
                         this.initialCheckDone = true;
@@ -365,6 +359,18 @@
                 } catch (error) {
                     console.error('Error checking unread messages', error);
                 }
+            }
+        };
+    }
+
+    function messageToast() {
+        return {
+            visible: false,
+            _timer: null,
+            show() {
+                this.visible = true;
+                clearTimeout(this._timer);
+                this._timer = setTimeout(() => { this.visible = false; }, 6000);
             }
         };
     }

@@ -17,21 +17,6 @@ use Illuminate\Validation\ValidationException;
 
 class AdvertController extends Controller
 {
-    public function index()
-    {
-        $user = auth()->user();
-        $this->pauseExpiredAdvertsForUser($user->id);
-
-        $adverts = $user->adverts()
-            ->with(['brand', 'model', 'condition'])
-            ->latest()
-            ->paginate(15);
-
-        $tradeUsage = $this->tradeAdvertUsage($user);
-
-        return view('adverts.index', compact('adverts', 'tradeUsage'));
-    }
-
     public function create()
     {
         if ($redirect = $this->ensureTradeAdvertLimitAvailable()) {
@@ -40,6 +25,160 @@ class AdvertController extends Controller
 
         $data = $this->formData();
         return view('adverts.create', $data);
+    }
+
+    public function storeDraft(Request $request)
+    {
+        $this->authorize_seller();
+
+        $validated = $request->validate($this->draftRules());
+        $validated = $this->normalizeAdvertBooleans($request, $validated);
+
+        $uploadedPhotoPaths = $this->sanitizeDraftPhotoPaths((array) $request->input('uploaded_photos', []));
+
+        $user    = auth()->user();
+        $fields  = $this->advertDraftFields($validated);
+        $mainImagePath = null;
+
+        if (!empty($uploadedPhotoPaths)) {
+            $mainImagePath = $this->moveDraftPhotoToFinal(array_shift($uploadedPhotoPaths), true);
+        }
+
+        $advert = $user->adverts()->create(array_merge($fields, [
+            'main_image'  => $mainImagePath,
+            'status'      => Advert::STATUS_DRAFT,
+            'expiry_date' => null,
+        ]));
+
+        foreach (array_values($uploadedPhotoPaths) as $i => $path) {
+            $finalPath = $this->moveDraftPhotoToFinal($path, false);
+            if ($finalPath) {
+                $advert->images()->create(['image_path' => $finalPath, 'sort_order' => $i]);
+            }
+        }
+
+        return redirect()->route('my-account')
+            ->with('success', 'Draft saved! You can continue editing it from your Dashboard anytime.');
+    }
+
+    public function updateDraft(Request $request, Advert $advert)
+    {
+        $this->authorize_owner($advert);
+        abort_unless($advert->status === Advert::STATUS_DRAFT, 403, 'Only drafts can be saved this way.');
+
+        $validated = $request->validate($this->draftRules());
+        $validated = $this->normalizeAdvertBooleans($request, $validated);
+
+        // Process photo removals
+        $removePhotoIds = array_filter((array) $request->input('remove_photos', []));
+        if (in_array('main', $removePhotoIds, true) && $advert->main_image) {
+            $this->deleteImagePath($advert->main_image);
+            $advert->update(['main_image' => null]);
+            $advert->refresh();
+        }
+        foreach ($removePhotoIds as $removeId) {
+            if ($removeId === 'main') {
+                continue;
+            }
+            $image = $advert->images()->find((int) $removeId);
+            if ($image) {
+                $this->deleteImagePath($image->image_path);
+                $image->delete();
+            }
+        }
+        $advert->refresh();
+
+        $uploadedPhotoPaths = $this->sanitizeDraftPhotoPaths((array) $request->input('uploaded_photos', []));
+
+        $fields = $this->advertDraftFields($validated);
+
+        if (!empty($uploadedPhotoPaths) && !$advert->main_image) {
+            $mainPath = $this->moveDraftPhotoToFinal(array_shift($uploadedPhotoPaths), true);
+            if ($mainPath) {
+                $fields['main_image'] = $mainPath;
+            }
+        }
+
+        $advert->update($fields);
+
+        // Save any remaining new photos as gallery images
+        foreach (array_values($uploadedPhotoPaths) as $i => $path) {
+            $finalPath = $this->moveDraftPhotoToFinal($path, false);
+            if ($finalPath) {
+                $advert->images()->create([
+                    'image_path' => $finalPath,
+                    'sort_order' => ($advert->images()->max('sort_order') ?? -1) + 1 + $i,
+                ]);
+            }
+        }
+
+        return redirect()->route('my-account')
+            ->with('success', 'Draft updated! You can continue editing it from your Dashboard anytime.');
+    }
+
+    public function publishDraft(Request $request, Advert $advert)
+    {
+        $this->authorize_owner($advert);
+        abort_unless($advert->status === Advert::STATUS_DRAFT, 403, 'Only drafts can be published this way.');
+
+        // Process photo removals before validation
+        $removePhotoIds = array_filter((array) $request->input('remove_photos', []));
+        if (in_array('main', $removePhotoIds, true) && $advert->main_image) {
+            $this->deleteImagePath($advert->main_image);
+            $advert->update(['main_image' => null]);
+            $advert->refresh();
+        }
+        foreach ($removePhotoIds as $removeId) {
+            if ($removeId === 'main') {
+                continue;
+            }
+            $image = $advert->images()->find((int) $removeId);
+            if ($image) {
+                $this->deleteImagePath($image->image_path);
+                $image->delete();
+            }
+        }
+        $advert->refresh();
+
+        $validated = $request->validate($this->rules());
+        $validated = $this->normalizeAdvertBooleans($request, $validated);
+        $uploadedPhotoPaths = $this->sanitizeDraftPhotoPaths((array) $request->input('uploaded_photos', []));
+
+        $existingCount = ($advert->main_image ? 1 : 0) + $advert->images()->count();
+        $photoCount = $existingCount + count($uploadedPhotoPaths);
+        if ($photoCount < 2) {
+            throw ValidationException::withMessages(['photos' => 'Please upload at least 2 images.']);
+        }
+
+        $mainImagePath = $advert->main_image;
+        if (!empty($uploadedPhotoPaths) && !$advert->main_image) {
+            $mainImagePath = $this->moveDraftPhotoToFinal(array_shift($uploadedPhotoPaths), true);
+        }
+
+        $advert->update(array_merge($this->advertFields($validated), [
+            'main_image'  => $mainImagePath,
+            'status'      => Advert::STATUS_DRAFT,
+            'expiry_date' => null,
+        ]));
+
+        foreach (array_values($uploadedPhotoPaths) as $i => $path) {
+            $finalPath = $this->moveDraftPhotoToFinal($path, false);
+            if ($finalPath) {
+                $advert->images()->create([
+                    'image_path' => $finalPath,
+                    'sort_order' => ($advert->images()->max('sort_order') ?? -1) + 1 + $i,
+                ]);
+            }
+        }
+
+        $user = auth()->user();
+        if ($user->isPrivateSeller()) {
+            return redirect()->route('seller.private.packages', $advert)
+                ->with('success', 'Listing complete! Please choose a package to activate it.');
+        }
+
+        $advert->update(['status' => Advert::STATUS_ACTIVE, 'expiry_date' => $user->isTradeSeller() ? null : now()->addMonths(3)]);
+        return redirect()->route('my-account')->with('success', 'Advert published successfully!');
     }
 
     public function store(Request $request)
@@ -113,7 +252,7 @@ class AdvertController extends Controller
                 ->with('success', 'Advert details saved. Please complete package checkout to activate this advert.');
         }
 
-        return redirect()->route('adverts.index')->with('success', 'Advert created successfully!');
+        return redirect()->route('my-account')->with('success', 'Advert created successfully!');
     }
 
     public function edit(Advert $advert)
@@ -156,7 +295,7 @@ class AdvertController extends Controller
             }
         }
 
-        return redirect()->route('adverts.index')
+        return redirect()->route('my-account')
             ->with('success', 'Advert updated successfully!');
     }
 
@@ -174,7 +313,7 @@ class AdvertController extends Controller
 
         $advert->delete();
 
-        return redirect()->route('adverts.index')
+        return redirect()->route('my-account')
             ->with('success', 'Advert deleted.');
     }
 
@@ -298,6 +437,74 @@ class AdvertController extends Controller
         ];
     }
 
+    private function draftRules(): array
+    {
+        return [
+            'title'                => 'nullable|string|max:255',
+            'description'          => 'nullable|string',
+            'brand_id'             => 'nullable|exists:brands,id',
+            'model_id'             => 'nullable|exists:brands,id',
+            'reference_number'     => 'nullable|string|max:120',
+            'category_id'          => 'nullable|exists:categories,id',
+            'price'                => 'nullable|numeric|min:0|max:999999',
+            'price_negotiable'     => 'nullable|boolean',
+            'accept_traders'       => 'nullable|boolean',
+            'city'                 => 'nullable|string|max:255',
+            'postcode'             => 'nullable|string|max:60',
+            'meeting_preference_id'=> 'nullable|exists:attribute_options,id',
+            'show_phone'           => 'nullable|boolean',
+            'uploaded_photos'      => 'nullable|array|max:20',
+            'uploaded_photos.*'    => 'nullable|string|max:500',
+            'paper_id'             => 'nullable|exists:attribute_options,id',
+            'box_id'               => 'nullable|exists:attribute_options,id',
+            'year_id'              => 'nullable|exists:attribute_options,id',
+            'gender_id'            => 'nullable|exists:attribute_options,id',
+            'condition_id'         => 'nullable|exists:attribute_options,id',
+            'case_size_mm'         => 'nullable|string|max:60',
+            'service_history'      => 'nullable|string',
+            'movement_id'          => 'nullable|exists:attribute_options,id',
+            'case_material_id'     => 'nullable|exists:attribute_options,id',
+            'bracelet_material_id' => 'nullable|exists:attribute_options,id',
+            'dial_colour_id'       => 'nullable|exists:attribute_options,id',
+            'case_diameter_id'     => 'nullable|exists:attribute_options,id',
+            'waterproof_id'        => 'nullable|exists:attribute_options,id',
+        ];
+    }
+
+    private function advertDraftFields(array $validated): array
+    {
+        $v = fn (string $key, $default = null) => $validated[$key] ?? $default;
+
+        return array_filter([
+            'title'                => $v('title'),
+            'description'          => $v('description'),
+            'brand_id'             => $v('brand_id'),
+            'model_id'             => $v('model_id'),
+            'reference_number'     => $v('reference_number'),
+            'category_id'          => $v('category_id'),
+            'price'                => $v('price'),
+            'price_negotiable'     => array_key_exists('price_negotiable', $validated) ? (bool) $validated['price_negotiable'] : false,
+            'accept_traders'       => array_key_exists('accept_traders', $validated) ? (bool) $validated['accept_traders'] : false,
+            'city'                 => $v('city'),
+            'postcode'             => $v('postcode'),
+            'meeting_preference_id'=> $v('meeting_preference_id'),
+            'show_phone'           => array_key_exists('show_phone', $validated) ? (bool) $validated['show_phone'] : true,
+            'paper_id'             => $v('paper_id'),
+            'box_id'               => $v('box_id'),
+            'year_id'              => $v('year_id'),
+            'gender_id'            => $v('gender_id'),
+            'condition_id'         => $v('condition_id'),
+            'case_size_mm'         => $v('case_size_mm'),
+            'service_history'      => $v('service_history'),
+            'movement_id'          => $v('movement_id'),
+            'case_material_id'     => $v('case_material_id'),
+            'bracelet_material_id' => $v('bracelet_material_id'),
+            'dial_colour_id'       => $v('dial_colour_id'),
+            'case_diameter_id'     => $v('case_diameter_id'),
+            'waterproof_id'        => $v('waterproof_id'),
+        ], fn ($val) => $val !== null);
+    }
+
     private function rules(bool $isCreate = true): array
     {
         return [
@@ -413,22 +620,12 @@ class AdvertController extends Controller
             ? "Trade package limit reached ({$usage['active_count']}/{$usage['max']} active adverts). Delete or deactivate an active advert to create a new one."
             : 'Trade package is not active. Please complete trade checkout first.';
 
-        return redirect()->route('adverts.index')->with('error', $message);
+        return redirect()->route('my-account')->with('error', $message);
     }
 
     private function tradeAdvertUsage($user): ?array
     {
         return $user->tradeAdvertUsage();
-    }
-
-    private function pauseExpiredAdvertsForUser(int $userId): void
-    {
-        Advert::query()
-            ->where('user_id', $userId)
-            ->where('status', Advert::STATUS_ACTIVE)
-            ->whereNotNull('expiry_date')
-            ->whereDate('expiry_date', '<', now()->toDateString())
-            ->update(['status' => Advert::STATUS_PAUSED]);
     }
 
     private function isPrivatePublishedAdvert(Advert $advert): bool

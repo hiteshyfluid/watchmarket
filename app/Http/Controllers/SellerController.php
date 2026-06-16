@@ -34,7 +34,7 @@ class SellerController extends Controller
         }
 
         if ($user->isSeller()) {
-            return redirect()->route('adverts.index');
+            return redirect()->route('adverts.create');
         }
 
         return redirect()->route('seller.choose-account-type');
@@ -59,7 +59,47 @@ class SellerController extends Controller
         $user->role = $request->role;
         $user->save();
 
-        return redirect()->route('adverts.index')->with('status', 'Your account has been updated to ' . str_replace('_', ' ', $request->role) . '.');
+        return redirect()->route('my-account')->with('status', 'Your account has been updated to ' . str_replace('_', ' ', $request->role) . '.');
+    }
+
+    public function pricing()
+    {
+        $user = auth()->user();
+
+        if ($user && $user->isPrivateSeller()) {
+            $levels = MembershipLevel::query()
+                ->where('seller_type', MembershipLevel::SELLER_TYPE_PRIVATE)
+                ->where('is_active', true)
+                ->where('allow_signups', true)
+                ->orderBy('initial_payment')
+                ->orderBy('name')
+                ->get();
+
+            return view('seller.private-pricing', compact('levels'));
+        }
+
+        if ($user && $user->isTradeSeller()) {
+            return redirect()->route('seller.trade.packages');
+        }
+
+        // Guest: show both private and trade pricing
+        $privateLevels = MembershipLevel::query()
+            ->where('seller_type', MembershipLevel::SELLER_TYPE_PRIVATE)
+            ->where('is_active', true)
+            ->where('allow_signups', true)
+            ->orderBy('initial_payment')
+            ->orderBy('name')
+            ->get();
+
+        $tradeLevels = MembershipLevel::query()
+            ->where('seller_type', MembershipLevel::SELLER_TYPE_TRADE)
+            ->where('is_active', true)
+            ->where('allow_signups', true)
+            ->orderBy('initial_payment')
+            ->orderBy('name')
+            ->get();
+
+        return view('seller.all-pricing', compact('privateLevels', 'tradeLevels'));
     }
 
     public function tradePackages()
@@ -180,7 +220,7 @@ class SellerController extends Controller
         $this->ensurePrivateAdvertOwner($advert, $user->id);
 
         if ($this->hasPaidPrivateOrder($advert)) {
-            return redirect()->route('adverts.index')
+            return redirect()->route('my-account')
                 ->with('error', 'Checkout is already completed for this advert.');
         }
 
@@ -209,7 +249,7 @@ class SellerController extends Controller
         $this->ensurePrivateAdvertOwner($advert, $user->id);
 
         if ($this->hasPaidPrivateOrder($advert)) {
-            return redirect()->route('adverts.index')
+            return redirect()->route('my-account')
                 ->with('error', 'Checkout is already completed for this advert.');
         }
 
@@ -217,8 +257,9 @@ class SellerController extends Controller
 
         $requiresStripe = $this->stripeCheckoutService->requiresStripe($level, MembershipPurchaseService::TYPE_PRIVATE);
         $stripeMode = $this->stripeCheckoutService->modeLabel();
+        $expiryDate = $this->membershipPurchaseService->endDateForLevel($level);
 
-        return view('seller.private-checkout', compact('level', 'user', 'advert', 'requiresStripe', 'stripeMode'));
+        return view('seller.private-checkout', compact('level', 'user', 'advert', 'requiresStripe', 'stripeMode', 'expiryDate'));
     }
 
     public function processPrivateCheckout(Request $request, Advert $advert, MembershipLevel $level)
@@ -227,7 +268,7 @@ class SellerController extends Controller
         $this->ensurePrivateAdvertOwner($advert, $user->id);
 
         if ($this->hasPaidPrivateOrder($advert)) {
-            return redirect()->route('adverts.index')
+            return redirect()->route('my-account')
                 ->with('error', 'Checkout is already completed for this advert.');
         }
 

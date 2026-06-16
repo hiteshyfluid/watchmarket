@@ -12,6 +12,7 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/watches', [PublicAdvertController::class, 'index'])->name('market.index');
 Route::get('/watches/{advert}', [PublicAdvertController::class, 'show'])->name('market.show');
 Route::get('/sell-watch', [App\Http\Controllers\SellerController::class, 'index'])->name('sell-watch');
+Route::get('/pricing', [App\Http\Controllers\SellerController::class, 'pricing'])->name('seller.pricing');
 Route::post('/stripe/webhook', [App\Http\Controllers\StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 // ----------------------------------------------------------------
@@ -49,7 +50,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Seller: advert CRUD
-    Route::resource('adverts', App\Http\Controllers\AdvertController::class);
+    // The standalone /adverts listing page is deprecated in favour of the Dashboard
+    // (my-account). Old links permanently redirect there; create/edit/etc. remain.
+    Route::get('/adverts', fn () => redirect()->route('my-account', [], 301))->name('adverts.index');
+    Route::post('/adverts/store-draft', [App\Http\Controllers\AdvertController::class, 'storeDraft'])->name('adverts.storeDraft');
+    Route::post('/adverts/{advert}/update-draft', [App\Http\Controllers\AdvertController::class, 'updateDraft'])->name('adverts.updateDraft');
+    Route::post('/adverts/{advert}/publish-draft', [App\Http\Controllers\AdvertController::class, 'publishDraft'])->name('adverts.publishDraft');
+    Route::resource('adverts', App\Http\Controllers\AdvertController::class)->except(['index', 'show']);
     Route::post('/adverts/draft-photos', [App\Http\Controllers\AdvertController::class, 'uploadDraftPhoto'])
         ->name('adverts.draft-photos.upload');
     Route::delete('/adverts/draft-photos', [App\Http\Controllers\AdvertController::class, 'deleteDraftPhoto'])
@@ -60,6 +67,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('adverts.pause');
     Route::patch('/adverts/{advert}/mark-sold', [App\Http\Controllers\AdvertController::class, 'markSold'])
         ->name('adverts.mark-sold');
+    // Must stay last: this wildcard would otherwise swallow GET /adverts/create
+    // (registered above by Route::resource) since {advert} matches "create" too.
+    Route::get('/adverts/{advert}', fn () => redirect()->route('my-account', [], 301))->name('adverts.show');
 
     // Dynamic models dropdown (AJAX)
     Route::get('/api/brands/{brand}/models', [App\Http\Controllers\AdvertController::class, 'modelsByBrand'])

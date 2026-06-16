@@ -309,7 +309,7 @@
                         <div class="mt-6 border border-[#d8d8d8] rounded-xl p-5 space-y-5 bg-[#fafafa]">
                             <div>
                                 <label class="block text-[16px] font-semibold text-[#111] mb-2">Asking Price (£) *</label>
-                                <input type="number" name="price" value="{{ old('price') }}" step="0.01" min="0" max="999999" required placeholder="e.g., 8500" class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                <input type="number" name="price" value="{{ old('price') }}" step="1" min="0" max="999999" required placeholder="e.g., 8500" class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                             </div>
 
                             <div class="space-y-3 border-b border-[#e2e2e2] pb-5">
@@ -326,7 +326,7 @@
                                 </label>
                                 <label class="flex items-center justify-between gap-4">
                                     <span>
-                                        <span class="block text-[16px] font-semibold text-[#111]">Accept Traders</span>
+                                        <span class="block text-[16px] font-semibold text-[#111]">Accept Part-Exchange</span>
                                         <span class="block text-[14px] text-[#666]">Open to part-exchange deals</span>
                                     </span>
                                     <span class="relative inline-flex items-center cursor-pointer">
@@ -367,11 +367,27 @@
                         </div>
                     </div>
 
-                    <div class="mt-8 flex items-center justify-between">
-                        <button type="button" @click="prevStep" class="h-11 px-6 rounded-lg border border-[#d1d1d1] bg-white text-[16px] text-[#333]" :class="step === 1 ? 'opacity-50 cursor-not-allowed' : ''" :disabled="step === 1">Back</button>
+                    <div class="mt-8 flex flex-wrap items-center gap-3 justify-between">
+                        <button type="button" @click="prevStep"
+                                class="h-11 px-6 rounded-lg border border-[#d1d1d1] bg-white text-[16px] text-[#333]"
+                                :class="step === 1 ? 'opacity-50 cursor-not-allowed' : ''"
+                                :disabled="step === 1">
+                            Back
+                        </button>
 
-                        <button type="button" x-show="step < 4" @click="nextStep" class="h-11 px-6 rounded-lg bg-[#171717] text-white text-[16px] font-semibold">Continue</button>
-                        <button type="button" x-show="step === 4" @click="submitForm" class="h-11 px-6 rounded-lg bg-[#d4b160] text-[#111] text-[16px] font-semibold">Create Listing</button>
+                        <button type="button" @click="saveDraft()"
+                                class="h-11 px-5 rounded-lg border border-[#d1d1d1] bg-white text-[15px] text-[#555] hover:bg-[#f5f5f5]">
+                            Save as Draft
+                        </button>
+
+                        <button type="button" x-show="step < 4" @click="nextStep"
+                                class="h-11 px-6 rounded-lg bg-[#171717] text-white text-[16px] font-semibold">
+                            Continue
+                        </button>
+                        <button type="button" x-show="step === 4" @click="submitForm"
+                                class="h-11 px-6 rounded-lg bg-[#d4b160] text-[#111] text-[16px] font-semibold">
+                            Create Listing
+                        </button>
                     </div>
                 </form>
                 </div>
@@ -527,6 +543,15 @@
 
                     this.syncPhotosInput();
                     HTMLFormElement.prototype.submit.call(form);
+                },
+                saveDraft() {
+                    const form = document.getElementById('create-advert-form');
+                    if (!form) return;
+                    this.syncPhotosInput();
+                    const original = form.action;
+                    form.action = '{{ route('adverts.storeDraft') }}';
+                    HTMLFormElement.prototype.submit.call(form);
+                    form.action = original;
                 },
                 handlePhotos(event) {
                     const input = event.target;

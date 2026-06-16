@@ -1,7 +1,7 @@
 <x-main-layout>
     <section class="bg-gray-100 py-12">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-3xl font-bold text-gray-900">Your Package</h1>
+            <h1 class="text-3xl font-bold text-gray-900">Your Chosen Package</h1>
         </div>
     </section>
 
@@ -24,19 +24,22 @@
                 @csrf
 
                 <div class="bg-white border rounded p-6">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-start justify-between gap-4">
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-900">Your Package</h2>
+                            <h2 class="text-2xl font-bold text-gray-900">Your Chosen Package</h2>
                             <p class="text-gray-600 mt-1">{{ $level->name }}</p>
                         </div>
-                        <a href="{{ route('seller.private.packages', $advert) }}" class="text-sm text-blue-600 hover:underline">Change Package</a>
+                        <div class="flex flex-col items-end gap-1 text-right whitespace-nowrap">
+                            <a href="{{ route('seller.private.packages', $advert) }}" class="text-sm text-blue-600 hover:underline">Change Package</a>
+                            <a href="{{ route('adverts.edit', $advert) }}" class="text-sm text-blue-600 hover:underline">Edit Listing</a>
+                        </div>
                     </div>
                     <div class="mt-4 text-sm text-gray-700">
-                        <p>Advert: {{ $advert->title }}</p>
-                        <p>Advert Price: £{{ number_format((float) $advert->price, 2) }}</p>
-                        <p>Package Price: £{{ number_format((float) $level->initial_payment, 2) }}</p>
-                        @if($level->expirationLabel() !== '--')
-                        <p>Advert Expiry: {{ $level->expirationLabel() }}</p>
+                        <p>Listing Title: {{ $advert->title }}</p>
+                        <p>Selling Price: £{{ number_format((float) $advert->price, 2) }}</p>
+                        <p>Total Advert Cost: £{{ number_format((float) $level->initial_payment, 2) }}</p>
+                        @if($expiryDate)
+                        <p>Expires after {{ \Carbon\Carbon::parse($expiryDate)->format('d F Y') }}</p>
                         @endif
                     </div>
                 </div>

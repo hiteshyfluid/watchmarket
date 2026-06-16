@@ -17,8 +17,8 @@
                         View Advert
                     </a>
                 @else
-                    <a href="{{ route('adverts.index') }}" class="inline-block mt-8 text-black font-semibold border-b border-black no-underline">
-                        View my adverts
+                    <a href="{{ route('my-account') }}" class="inline-block mt-8 text-black font-semibold border-b border-black no-underline">
+                        View my Dashboard
                     </a>
                 @endif
             </div>

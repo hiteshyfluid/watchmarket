@@ -45,15 +45,17 @@ class Advert extends Model
         'dial_colour_id',
         'case_diameter_id',
         'waterproof_id',
+        'views',
     ];
 
     protected $casts = [
-        'expiry_date' => 'date',
-        'is_sold'     => 'boolean',
-        'show_phone'  => 'boolean',
-        'is_featured' => 'boolean',
+        'expiry_date'      => 'date',
+        'is_sold'          => 'boolean',
+        'show_phone'       => 'boolean',
+        'is_featured'      => 'boolean',
         'price_negotiable' => 'boolean',
-        'accept_traders' => 'boolean',
+        'accept_traders'   => 'boolean',
+        'views' => 'integer',
     ];
 
     // ----------------------------------------------------------------
@@ -90,6 +92,11 @@ class Advert extends Model
         return $this->belongsToMany(Tag::class, 'advert_tag');
     }
 
+    public function conversations()
+    {
+        return $this->hasMany(\App\Models\Conversation::class);
+    }
+
     // Watch attribute relationships
     public function paper()            { return $this->belongsTo(AttributeOption::class, 'paper_id'); }
     public function box()              { return $this->belongsTo(AttributeOption::class, 'box_id'); }
@@ -123,6 +130,16 @@ class Advert extends Model
         return $query->where('is_featured', true);
     }
 
+    public static function pauseExpiredForUser(int $userId): void
+    {
+        static::query()
+            ->where('user_id', $userId)
+            ->where('status', self::STATUS_ACTIVE)
+            ->whereNotNull('expiry_date')
+            ->whereDate('expiry_date', '<', now()->toDateString())
+            ->update(['status' => self::STATUS_PAUSED]);
+    }
+
     // ----------------------------------------------------------------
     // Helpers
     // ----------------------------------------------------------------
@@ -148,5 +165,38 @@ class Advert extends Model
             return asset('storage/' . $path);
         }
         return null;
+    }
+
+    public function isReadyForCheckout(): bool
+    {
+        if ($this->status !== self::STATUS_DRAFT) {
+            return false;
+        }
+
+        foreach (['title', 'description', 'city'] as $field) {
+            if (is_null($this->{$field}) || trim((string) $this->{$field}) === '') {
+                return false;
+            }
+        }
+
+        foreach (['brand_id', 'model_id', 'paper_id', 'box_id', 'year_id', 'condition_id'] as $field) {
+            if (empty($this->{$field})) {
+                return false;
+            }
+        }
+
+        if (is_null($this->price)) {
+            return false;
+        }
+
+        if (!$this->main_image) {
+            return false;
+        }
+
+        $imageCount = $this->relationLoaded('images')
+            ? $this->images->count()
+            : $this->images()->count();
+
+        return $imageCount >= 1;
     }
 }

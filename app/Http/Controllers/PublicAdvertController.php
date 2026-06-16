@@ -136,6 +136,12 @@ class PublicAdvertController extends Controller
     {
         abort_unless($advert->status === Advert::STATUS_ACTIVE, 404);
 
+        $sessionKey = 'viewed_advert_' . $advert->id;
+        if (!session()->has($sessionKey)) {
+            $advert->increment('views');
+            session()->put($sessionKey, true);
+        }
+
         $advert->loadMissing([
             'user',
             'brand',

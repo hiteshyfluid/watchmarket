@@ -2,6 +2,26 @@
     @php
         $privateEditLock = $privateEditLock ?? false;
         $privatePriceRange = $privatePriceRange ?? null;
+
+        $existingPhotos = [];
+        if ($advert->status === \App\Models\Advert::STATUS_DRAFT) {
+            if ($advert->main_image) {
+                $existingPhotos[] = [
+                    'id'       => 'main',
+                    'path'     => $advert->main_image,
+                    'url'      => $advert->mainImageUrl(),
+                    'existing' => true,
+                ];
+            }
+            foreach ($advert->images as $img) {
+                $existingPhotos[] = [
+                    'id'       => (string) $img->id,
+                    'path'     => $img->image_path,
+                    'url'      => $img->url(),
+                    'existing' => true,
+                ];
+            }
+        }
     @endphp
 
     <section x-data="editAdvertWizard()">
@@ -10,7 +30,7 @@
                 <div class="m-auto px-5 lg:px-8 max-w-4xl">
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <template x-for="(item, idx) in steps" :key="idx">
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-3 cursor-pointer" @click="step = idx + 1">
                                 <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold"
                                      :class="idx + 1 < step ? 'bg-[#22c55e] text-white' : (idx + 1 === step ? 'bg-black text-white' : 'bg-[#e8e8e8] text-[#666]')">
                                     <span x-show="idx + 1 >= step" x-text="idx + 1"></span>
@@ -44,6 +64,7 @@
                         @csrf
                         @method('PUT')
 
+                        {{-- ── Step 1: Watch Details ───────────────────────────────── --}}
                         <div x-show="step === 1" x-cloak x-data="{ selectedBrand: '{{ old('brand_id', $advert->brand_id) }}' }">
                             <h2 class="text-[28px] font-semibold text-[#111]">Watch Details</h2>
                             <p class="text-[16px] text-[#666] mt-2">Update your watch details</p>
@@ -139,6 +160,7 @@
                             </div>
                         </div>
 
+                        {{-- ── Step 2: Specifications ──────────────────────────────── --}}
                         <div x-show="step === 2" x-cloak>
                             <h2 class="text-[28px] font-semibold text-[#111]">Specifications</h2>
                             <p class="text-[16px] text-[#666] mt-2">Update technical details</p>
@@ -202,11 +224,66 @@
                             </div>
                         </div>
 
+                        {{-- ── Step 3: Photos ──────────────────────────────────────── --}}
                         <div x-show="step === 3" x-cloak>
                             <h2 class="text-[28px] font-semibold text-[#111]">Photos</h2>
-                            <p class="text-[16px] text-[#666] mt-2">Manage current photos and upload more</p>
+                            <p class="text-[16px] text-[#666] mt-2">
+                                {{ $advert->status === \App\Models\Advert::STATUS_DRAFT ? 'Upload at least 2 high-quality images' : 'Manage current photos and upload more' }}
+                            </p>
 
                             <div class="mt-6 border border-[#d8d8d8] rounded-xl p-5 space-y-5 bg-[#fafafa]">
+
+                                @if($advert->status === \App\Models\Advert::STATUS_DRAFT)
+                                {{-- Draft: AJAX upload widget with existing photo grid ──── --}}
+
+                                <div class="rounded-lg border border-[#e9cf8d] bg-[#fbf6e7] p-4 text-[12px] text-[#7a4e00]">
+                                    <strong>Required photo angles:</strong>
+                                    <ul class="list-disc list-inside mt-2 space-y-1">
+                                        <li>Dial (front face)</li>
+                                        <li>Caseback</li>
+                                        <li>Clasp/buckle</li>
+                                        <li>Side profile</li>
+                                        <li>Wrist shot or size reference</li>
+                                    </ul>
+                                </div>
+
+                                {{-- Hidden inputs submitted with form --}}
+                                <template x-for="id in removedExistingIds" :key="id">
+                                    <input type="hidden" name="remove_photos[]" :value="id">
+                                </template>
+                                <template x-for="path in uploadedPhotoPaths" :key="path">
+                                    <input type="hidden" name="uploaded_photos[]" :value="path">
+                                </template>
+
+                                <div>
+                                    <label class="inline-flex items-center justify-center w-44 h-32 border border-dashed border-[#cfcfcf] rounded-lg bg-white cursor-pointer text-[#666] hover:border-[#bdbdbd]">
+                                        <span class="text-center text-[14px]">Add Photos</span>
+                                        <input id="edit-photos-input" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="hidden" @change="handlePhotos($event)">
+                                    </label>
+                                    <p class="text-[13px] text-[#777] mt-2">Minimum 2, Maximum 20 images. First image becomes main image.</p>
+                                </div>
+
+                                <template x-if="allPreviews.length > 0">
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                        <template x-for="(photo, idx) in allPreviews" :key="photo.id">
+                                            <div class="relative rounded-lg overflow-hidden bg-white border border-[#dcdcdc] h-24">
+                                                <img :src="photo.url" class="w-full h-full object-cover" alt="preview">
+                                                <button type="button"
+                                                    @click="removePhotoFromList(photo)"
+                                                    class="absolute top-1 right-1 w-5 h-5 rounded-full bg-white/95 text-[#444] text-[12px] leading-none border border-[#ddd] hover:bg-[#f7f7f7]">
+                                                    &times;
+                                                </button>
+                                                <span x-show="idx === 0" class="absolute left-1 bottom-1 text-[11px] px-2 py-0.5 rounded bg-[#1f2937] text-white">Main</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <p class="text-[13px] text-[#777]" x-show="isUploading">Uploading photos...</p>
+                                <p class="text-[14px] text-red-600" x-show="photoError" x-text="photoError"></p>
+
+                                @else
+                                {{-- Non-draft: simple file inputs ──────────────────────── --}}
                                 @if($advert->main_image)
                                     <div>
                                         <p class="text-[13px] text-[#555] mb-2 font-semibold">Current Main Photo</p>
@@ -246,9 +323,12 @@
                                     <label class="block text-[16px] font-semibold text-[#111] mb-2">Add More Gallery Photos</label>
                                     <input type="file" name="gallery[]" accept=".jpg,.jpeg,.png,.webp" multiple class="block w-full text-[14px] text-[#444]">
                                 </div>
+                                @endif
+
                             </div>
                         </div>
 
+                        {{-- ── Step 4: Pricing & Location ──────────────────────────── --}}
                         <div x-show="step === 4" x-cloak>
                             <h2 class="text-[28px] font-semibold text-[#111]">Pricing &amp; Location</h2>
                             <p class="text-[16px] text-[#666] mt-2">Update price and preferences</p>
@@ -256,7 +336,7 @@
                             <div class="mt-6 border border-[#d8d8d8] rounded-xl p-5 space-y-5 bg-[#fafafa]">
                                 <div>
                                     <label class="block text-[16px] font-semibold text-[#111] mb-2">Asking Price (&pound;) *</label>
-                                    <input type="number" name="price" id="price-input" value="{{ old('price', $advert->price) }}" step="0.01" min="{{ $privatePriceRange['min'] ?? 0 }}" @if($privatePriceRange) max="{{ $privatePriceRange['max'] }}" @else max="999999" @endif required class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                    <input type="number" name="price" id="price-input" value="{{ old('price', $advert->price) }}" step="1" min="{{ $privatePriceRange['min'] ?? 0 }}" @if($privatePriceRange) max="{{ $privatePriceRange['max'] }}" @else max="999999" @endif required class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                                     @if($privatePriceRange)
                                         <p class="text-[13px] text-amber-700 mt-2">Allowed pricing for this advert: &pound;{{ number_format($privatePriceRange['min'], 2) }} to &pound;{{ number_format($privatePriceRange['max'], 2) }}</p>
                                     @endif
@@ -276,7 +356,7 @@
                                     </label>
                                     <label class="flex items-center justify-between gap-4">
                                         <span>
-                                            <span class="block text-[16px] font-semibold text-[#111]">Accept Traders</span>
+                                            <span class="block text-[16px] font-semibold text-[#111]">Accept Part-Exchange</span>
                                             <span class="block text-[14px] text-[#666]">Open to part-exchange deals</span>
                                         </span>
                                         <span class="relative inline-flex items-center cursor-pointer">
@@ -317,14 +397,43 @@
                             </div>
                         </div>
 
-                        <div class="mt-8 flex items-center justify-between">
-                            <button type="button" @click="prevStep" class="h-11 px-6 rounded-lg border border-[#d1d1d1] bg-white text-[16px] text-[#333]" :class="step === 1 ? 'opacity-50 cursor-not-allowed' : ''" :disabled="step === 1">Back</button>
+                        {{-- ── Navigation buttons ──────────────────────────────────── --}}
+                        <div class="mt-8 flex flex-wrap items-center gap-3 justify-between">
+                            <button type="button" @click="prevStep"
+                                    class="h-11 px-6 rounded-lg border border-[#d1d1d1] bg-white text-[16px] text-[#333]"
+                                    :class="step === 1 ? 'opacity-50 cursor-not-allowed' : ''"
+                                    :disabled="step === 1">
+                                Back
+                            </button>
 
-                            <button type="button" x-show="step < 4" @click="nextStep" class="h-11 px-6 rounded-lg bg-[#171717] text-white text-[16px] font-semibold">Continue</button>
-                            <button type="button" x-show="step === 4" @click="submitForm" class="h-11 px-6 rounded-lg bg-[#d4b160] text-[#111] text-[16px] font-semibold">Update Listing</button>
+                            @if($advert->status === \App\Models\Advert::STATUS_DRAFT)
+                            <button type="button" @click="saveDraft()"
+                                    class="h-11 px-5 rounded-lg border border-[#d1d1d1] bg-white text-[15px] text-[#555] hover:bg-[#f5f5f5]">
+                                Save as Draft
+                            </button>
+                            @endif
+
+                            <button type="button" x-show="step < 4" @click="nextStep"
+                                    class="h-11 px-6 rounded-lg bg-[#171717] text-white text-[16px] font-semibold">
+                                Continue
+                            </button>
+
+                            @if($advert->status === \App\Models\Advert::STATUS_DRAFT)
+                                <button type="button" x-show="step === 4" @click="publishDraft()"
+                                        class="h-11 px-6 rounded-lg bg-[#d4b160] text-[#111] text-[16px] font-semibold">
+                                    Publish Listing
+                                </button>
+                            @else
+                                <button type="button" x-show="step === 4" @click="submitForm"
+                                        class="h-11 px-6 rounded-lg bg-[#d4b160] text-[#111] text-[16px] font-semibold">
+                                    Update Listing
+                                </button>
+                            @endif
                         </div>
                     </form>
-                    @if($advert->images->count())
+
+                    {{-- Delete-image forms (non-draft only) --}}
+                    @if($advert->status !== \App\Models\Advert::STATUS_DRAFT && $advert->images->count())
                         @foreach($advert->images as $img)
                             <form id="delete-image-{{ $img->id }}" method="POST" action="{{ route('adverts.images.destroy', [$advert, $img]) }}" class="hidden">
                                 @csrf
@@ -347,13 +456,27 @@
     <script>
         function editAdvertWizard() {
             return {
-                step: 1,
+                step: {{ $advert->status === \App\Models\Advert::STATUS_DRAFT ? 1 : 4 }},
                 steps: [
                     { title: 'Watch Details', subtitle: 'Basic information' },
                     { title: 'Specifications', subtitle: 'Technical details' },
                     { title: 'Photos', subtitle: 'Images' },
                     { title: 'Pricing & Location', subtitle: 'Final step' },
                 ],
+
+                // Photo state — used when editing a draft
+                existingPhotos: @json($existingPhotos),
+                removedExistingIds: [],
+                uploadedPhotoPaths: [],
+                newPhotoPreviews: [],
+                isUploading: false,
+                photoError: '',
+
+                get allPreviews() {
+                    const kept = this.existingPhotos.filter(p => !this.removedExistingIds.includes(p.id));
+                    return [...kept, ...this.newPhotoPreviews];
+                },
+
                 nextStep() {
                     if (!this.validateStep(this.step)) return;
                     if (this.step < 4) this.step++;
@@ -382,6 +505,18 @@
                             desc.focus();
                             return false;
                         }
+                    }
+
+                    if (current === 3) {
+                        if (this.isUploading) {
+                            this.photoError = 'Please wait, photos are still uploading.';
+                            return false;
+                        }
+                        if (this.allPreviews.length < 2) {
+                            this.photoError = 'Please upload at least 2 images.';
+                            return false;
+                        }
+                        this.photoError = '';
                     }
 
                     if (current === 4) {
@@ -425,7 +560,115 @@
                     }
 
                     HTMLFormElement.prototype.submit.call(form);
-                }
+                },
+                saveDraft() {
+                    const form = document.getElementById('edit-advert-form');
+                    if (!form) return;
+                    const methodInput = form.querySelector('input[name="_method"]');
+                    form.action = '{{ route('adverts.updateDraft', $advert) }}';
+                    if (methodInput) methodInput.remove();
+                    HTMLFormElement.prototype.submit.call(form);
+                },
+                publishDraft() {
+                    const form = document.getElementById('edit-advert-form');
+                    if (!form) return;
+
+                    for (const targetStep of [1, 2, 3, 4]) {
+                        if (!this.validateStep(targetStep)) {
+                            this.step = targetStep;
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            return;
+                        }
+                    }
+
+                    const methodInput = form.querySelector('input[name="_method"]');
+                    form.action = '{{ route('adverts.publishDraft', $advert) }}';
+                    if (methodInput) methodInput.remove();
+                    HTMLFormElement.prototype.submit.call(form);
+                },
+
+                // ── Photo upload methods (draft editing) ───────────────────────────
+                removePhotoFromList(photo) {
+                    if (photo.existing) {
+                        this.removedExistingIds.push(photo.id);
+                    } else {
+                        const idx = this.newPhotoPreviews.findIndex(p => p.id === photo.id);
+                        if (idx !== -1) {
+                            const removed = this.newPhotoPreviews[idx];
+                            this.newPhotoPreviews.splice(idx, 1);
+                            this.uploadedPhotoPaths = this.uploadedPhotoPaths.filter(p => p !== removed.path);
+                            this.deleteDraftPhotoRequest(removed.path);
+                        }
+                    }
+                },
+                handlePhotos(event) {
+                    const input = event.target;
+                    const incoming = Array.from(input.files || []);
+                    if (!incoming.length) return;
+
+                    this.photoError = '';
+                    const maxSize = 5 * 1024 * 1024;
+                    for (const file of incoming) {
+                        if (file.size > maxSize) {
+                            this.photoError = `File "${file.name}" is too large. Maximum size is 5MB.`;
+                            input.value = '';
+                            return;
+                        }
+                    }
+
+                    const available = 20 - this.allPreviews.length;
+                    const files = incoming.slice(0, Math.max(available, 0));
+                    if (!files.length) {
+                        this.photoError = 'You can upload a maximum of 20 images.';
+                        input.value = '';
+                        return;
+                    }
+                    this.uploadSelectedFiles(files, input);
+                },
+                async uploadSelectedFiles(files, inputEl) {
+                    this.isUploading = true;
+                    try {
+                        for (const file of files) {
+                            const payload = await this.uploadPhotoAjax(file);
+                            if (!payload?.path) continue;
+                            if (this.uploadedPhotoPaths.includes(payload.path)) continue;
+                            this.uploadedPhotoPaths.push(payload.path);
+                            this.newPhotoPreviews.push({ id: payload.path, path: payload.path, url: payload.url, existing: false });
+                        }
+                    } catch {
+                        this.photoError = 'Image upload failed. Please try again.';
+                    } finally {
+                        this.isUploading = false;
+                        if (inputEl) inputEl.value = '';
+                    }
+                },
+                async uploadPhotoAjax(file) {
+                    const formData = new FormData();
+                    formData.append('photo', file);
+                    const response = await fetch('{{ route('adverts.draft-photos.upload') }}', {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': this.csrfToken(), 'Accept': 'application/json' },
+                        body: formData,
+                    });
+                    if (!response.ok) throw new Error('Upload failed');
+                    return response.json();
+                },
+                async deleteDraftPhotoRequest(path) {
+                    try {
+                        await fetch('{{ route('adverts.draft-photos.delete') }}', {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': this.csrfToken(),
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ path }),
+                        });
+                    } catch {}
+                },
+                csrfToken() {
+                    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                },
             }
         }
 

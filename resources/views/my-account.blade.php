@@ -17,7 +17,7 @@
                         <span>New Listing</span>
                     </button>
                 @else
-                    <a href="{{ route('adverts.create') }}" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 h-12 px-7 rounded-xl bg-black text-white text-[16px] font-semibold no-underline hover:bg-[#161616]">
+                    <a href="{{ $user->isCustomer() ? route('seller.choose-account-type') : route('adverts.create') }}" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 h-12 px-7 rounded-xl bg-black text-white text-[16px] font-semibold no-underline hover:bg-[#161616]">
                         <span>+</span>
                         <span>New Listing</span>
                     </a>
@@ -83,6 +83,8 @@
                     ];
                     if (auth()->user()->isTradeSeller()) {
                         $tabs = array_slice($tabs, 0, 3, true) + ['subscriptions' => 'My Subscriptions'] + array_slice($tabs, 3, null, true);
+                    } elseif (auth()->user()->isCustomer()) {
+                        unset($tabs['dashboard'], $tabs['invoices']);
                     }
                 @endphp
                 @foreach($tabs as $key => $label)
@@ -123,12 +125,12 @@
                                             <h3 class="text-[18px] font-semibold text-[#111]">{{ $advert->title }}</h3>
                                             <p class="text-[30px] sm:text-[40px] leading-none font-semibold mt-2">£{{ number_format((float) $advert->price, 0) }}</p>
                                             <div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px] text-[#666]">
-                                                <span class="inline-flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/><circle cx="12" cy="12" r="3" stroke-width="1.8"></circle></svg> 0 views</span>
-                                                <span class="inline-flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg> 0 enquiries</span>
+                                                <span class="inline-flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/><circle cx="12" cy="12" r="3" stroke-width="1.8"></circle></svg> {{ (int) $advert->views }} views</span>
+                                                <span class="inline-flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg> {{ (int) $advert->conversations_count }} enquiries</span>
                                                 <span class="inline-flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> {{ $advert->created_at->diffForHumans() }}</span>
                                                 <span>
                                                     @if($advert->expiry_date)
-                                                        Expires {{ $advert->expiry_date->diffForHumans() }}
+                                                        Expires {{ $advert->expiry_date->format('d M Y') }}
                                                     @else
                                                         No expiry
                                                     @endif
@@ -147,21 +149,51 @@
                                             </button>
                                         </div>
                                         <div x-cloak x-show="openAction" @click.away="openAction = false" class="absolute right-0 mt-2 w-full sm:w-52 bg-[#f7f7f7] border border-[#d8d8d8] rounded-xl shadow-md overflow-hidden z-20">
-                                            <a href="{{ route('adverts.edit', $advert) }}" class="block px-4 py-3 text-[16px] text-[#222] no-underline hover:bg-[#eeeeee]">Edit Listing</a>
-                                            <form method="POST" action="{{ route('adverts.mark-sold', $advert) }}">
-                                                @csrf @method('PATCH')
-                                                <button type="submit" class="w-full text-left px-4 py-3 text-[16px] text-[#222] hover:bg-[#eeeeee]">Mark as Sold</button>
-                                            </form>
-                                            <form method="POST" action="{{ route('adverts.pause', $advert) }}">
-                                                @csrf @method('PATCH')
-                                                <button type="submit" class="w-full text-left px-4 py-3 text-[16px] text-[#222] hover:bg-[#eeeeee]">
-                                                    {{ $advert->status === \App\Models\Advert::STATUS_ACTIVE ? 'Put on Hold' : 'Resume Listing' }}
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="{{ route('adverts.destroy', $advert) }}">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" onclick="return confirm('Delete this listing?')" class="w-full text-left px-4 py-3 text-[16px] text-red-500 hover:bg-[#eeeeee]">Delete</button>
-                                            </form>
+                                            @if($advert->status === \App\Models\Advert::STATUS_DRAFT)
+                                                {{-- Draft: edit, optionally go to checkout, delete --}}
+                                                <a href="{{ route('adverts.edit', $advert) }}"
+                                                   class="flex items-center gap-2 px-4 py-3 text-[15px] text-[#222] no-underline hover:bg-[#eeeeee]">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                    Edit Draft
+                                                </a>
+                                                @if(auth()->user()->isPrivateSeller() && $advert->isReadyForCheckout())
+                                                <a href="{{ route('seller.private.packages', $advert) }}"
+                                                   class="flex items-center gap-2 px-4 py-3 text-[15px] text-[#0066cc] no-underline hover:bg-[#eeeeee]">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    Complete Checkout
+                                                </a>
+                                                @endif
+                                                <div class="border-t border-[#ebebeb] my-1"></div>
+                                                <form method="POST" action="{{ route('adverts.destroy', $advert) }}">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit" onclick="return confirm('Delete this draft?')" class="w-full text-left px-4 py-3 text-[15px] text-red-500 hover:bg-[#eeeeee]">Delete Draft</button>
+                                                </form>
+                                            @elseif($advert->status === \App\Models\Advert::STATUS_SOLD)
+                                                {{-- Sold: delete only --}}
+                                                <form method="POST" action="{{ route('adverts.destroy', $advert) }}">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit" onclick="return confirm('Delete this listing?')" class="w-full text-left px-4 py-3 text-[16px] text-red-500 hover:bg-[#eeeeee]">Delete Listing</button>
+                                                </form>
+                                            @else
+                                                {{-- Active / Paused / Expired --}}
+                                                <a href="{{ route('adverts.edit', $advert) }}" class="block px-4 py-3 text-[16px] text-[#222] no-underline hover:bg-[#eeeeee]">Edit Listing</a>
+                                                @if(in_array($advert->status, [\App\Models\Advert::STATUS_ACTIVE, \App\Models\Advert::STATUS_PAUSED]))
+                                                    <form method="POST" action="{{ route('adverts.mark-sold', $advert) }}">
+                                                        @csrf @method('PATCH')
+                                                        <button type="submit" onclick="return confirm('Are you sure you want to mark this listing as sold?')" class="w-full text-left px-4 py-3 text-[16px] text-[#222] hover:bg-[#eeeeee]">Mark as Sold</button>
+                                                    </form>
+                                                    <form method="POST" action="{{ route('adverts.pause', $advert) }}">
+                                                        @csrf @method('PATCH')
+                                                        <button type="submit" class="w-full text-left px-4 py-3 text-[16px] text-[#222] hover:bg-[#eeeeee]">
+                                                            {{ $advert->status === \App\Models\Advert::STATUS_ACTIVE ? 'Put on Hold' : 'Resume Listing' }}
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                                <form method="POST" action="{{ route('adverts.destroy', $advert) }}">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit" onclick="return confirm('Delete this listing?')" class="w-full text-left px-4 py-3 text-[16px] text-red-500 hover:bg-[#eeeeee]">Delete Listing</button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

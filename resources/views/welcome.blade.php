@@ -212,7 +212,7 @@
                    class="inline-flex items-center justify-center w-full sm:w-auto min-w-[200px] h-14 px-8 rounded-2xl bg-black text-white text-[16px] font-semibold no-underline hover:bg-[#161616] transition">
                     Create a Listing
                 </a>
-                <a href="{{ route('seller.trade.packages') }}"
+                <a href="{{ route('seller.pricing') }}"
                    class="inline-flex items-center justify-center w-full sm:w-auto min-w-[180px] h-14 px-8 rounded-2xl border border-[#d2d2d2] bg-white text-[#111] text-[16px] font-medium no-underline hover:bg-[#fafafa] transition">
                     View Pricing
                 </a>

@@ -97,6 +97,14 @@
                     @endif
                 </div>
 
+                <div class="mt-3 flex items-center gap-1.5 text-[13px] text-[#999]">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <span>{{ number_format((int) ($advert->views ?? 0)) }} {{ (int) ($advert->views ?? 0) === 1 ? 'view' : 'views' }}</span>
+                </div>
+
                 <x-flash-messages class="mt-5" />
 
                 <div class="mt-5">
@@ -125,6 +133,11 @@
                         <div>
                             <div class="text-[15px] text-[#888]">Seller</div>
                             <div class="text-[18px] text-[#111] font-semibold mt-1">{{ $advert->user->name ?? 'Seller' }}</div>
+                            @if($advert->user)
+                                <span class="inline-flex items-center rounded-full border px-3 py-1 text-[12px] font-semibold mt-2 {{ $advert->user->isTradeSeller() ? 'border-[#e4d2a1] bg-[#f6efe0] text-[#8c6a22]' : ($advert->user->isPrivateSeller() ? 'border-[#cfd8e3] bg-[#eef3f8] text-[#35516f]' : 'border-[#dddddd] bg-white text-[#555]') }}">
+                                    {{ $advert->user->roleLabel() }}
+                                </span>
+                            @endif
                             <div class="text-[15px] text-[#666] mt-2">{{ $advert->city ?: ($advert->user->city ?? '-') }}</div>
                             @if($advert->show_phone && !empty($advert->user?->phone))
                                 <div class="text-[15px] text-[#666] mt-1">{{ $advert->user->phone }}</div>
