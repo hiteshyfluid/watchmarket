@@ -9,6 +9,7 @@
 
                 <x-flash-messages class="mb-4" />
                 <x-auth-session-status class="mb-4" :status="session('status')" />
+                <x-input-error :messages="$errors->get('email')" class="mb-4" />
 
                 <form method="POST" action="{{ route('password.store') }}" class="space-y-5">
                     @csrf

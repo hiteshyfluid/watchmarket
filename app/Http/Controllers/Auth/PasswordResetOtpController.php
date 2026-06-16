@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PasswordResetOtpMail;
 use App\Models\PasswordResetOtp;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class PasswordResetOtpController extends Controller
@@ -55,6 +57,30 @@ class PasswordResetOtpController extends Controller
 
         return redirect()->route('password.reset')
             ->with('status', 'OTP verified. Please set your new password.');
+    }
+
+    public function resend(Request $request): RedirectResponse
+    {
+        $email = (string) $request->session()->get('password_reset_email');
+        if ($email === '') {
+            return redirect()->route('password.request');
+        }
+
+        $otp = (string) random_int(100000, 999999);
+
+        PasswordResetOtp::updateOrCreate(
+            ['email' => $email],
+            [
+                'otp_hash' => Hash::make($otp),
+                'expires_at' => Carbon::now()->addMinutes(5),
+                'verified_at' => null,
+            ]
+        );
+
+        Mail::to($email)->send(new PasswordResetOtpMail($otp, 5));
+
+        return redirect()->route('password.otp.form')
+            ->with('status', 'A new OTP has been sent to your email. It is valid for 5 minutes.');
     }
 }
 

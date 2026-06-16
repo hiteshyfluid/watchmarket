@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\PasswordResetOtp;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -48,10 +47,6 @@ class NewPasswordController extends Controller
         $otpRecord = PasswordResetOtp::query()->where('email', $sessionEmail)->first();
         if (!$otpRecord || !$otpRecord->verified_at) {
             return back()->withErrors(['email' => 'OTP not verified. Please verify OTP again.']);
-        }
-
-        if (Carbon::now()->greaterThan($otpRecord->expires_at)) {
-            return back()->withErrors(['email' => 'OTP expired. Please request a new OTP.']);
         }
 
         $user = User::query()->where('email', $sessionEmail)->first();

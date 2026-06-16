@@ -27,6 +27,11 @@
                         <a href="{{ route('password.request') }}" class="text-[14px] text-[#555] no-underline hover:underline">Change email</a>
                     </div>
                 </form>
+
+                <form method="POST" action="{{ route('password.otp.resend') }}" class="mt-4">
+                    @csrf
+                    <button type="submit" class="text-[14px] text-[#555] underline hover:text-[#111] bg-transparent border-0 p-0 cursor-pointer">Resend OTP</button>
+                </form>
             </div>
         </div>
     </section>
