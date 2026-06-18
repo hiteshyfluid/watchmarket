@@ -19,6 +19,10 @@ Route::get('/contact-us', [App\Http\Controllers\ContactController::class, 'show'
 Route::post('/contact-us', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
 Route::get('/terms-conditions', [App\Http\Controllers\PageController::class, 'terms'])->name('pages.terms');
 Route::get('/privacy-policy', [App\Http\Controllers\PageController::class, 'privacy'])->name('pages.privacy');
+Route::get('/help-centre', fn () => view('help-centre'))->name('help.index');
+Route::get('/safety-tips', fn () => view('safety-tips'))->name('safety.tips');
+Route::get('/report-a-listing', [App\Http\Controllers\ListingReportController::class, 'show'])->name('report-listing.show');
+Route::post('/report-a-listing', [App\Http\Controllers\ListingReportController::class, 'store'])->name('report-listing.store');
 
 // ----------------------------------------------------------------
 // Authenticated (all roles)
@@ -136,6 +140,10 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\AdminMiddleware::clas
 
         Route::get('/contact-settings', [App\Http\Controllers\Admin\ContactSettingController::class, 'edit'])->name('contact-settings.edit');
         Route::put('/contact-settings', [App\Http\Controllers\Admin\ContactSettingController::class, 'update'])->name('contact-settings.update');
+
+        Route::get('/listing-reports', [App\Http\Controllers\Admin\ListingReportController::class, 'index'])->name('listing-reports.index');
+        Route::get('/listing-reports/{listingReport}', [App\Http\Controllers\Admin\ListingReportController::class, 'show'])->name('listing-reports.show');
+        Route::patch('/listing-reports/{listingReport}/status', [App\Http\Controllers\Admin\ListingReportController::class, 'updateStatus'])->name('listing-reports.status');
     });
 
 require __DIR__.'/auth.php';

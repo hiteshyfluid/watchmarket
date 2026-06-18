@@ -64,25 +64,6 @@ class SellerController extends Controller
 
     public function pricing()
     {
-        $user = auth()->user();
-
-        if ($user && $user->isPrivateSeller()) {
-            $levels = MembershipLevel::query()
-                ->where('seller_type', MembershipLevel::SELLER_TYPE_PRIVATE)
-                ->where('is_active', true)
-                ->where('allow_signups', true)
-                ->orderBy('initial_payment')
-                ->orderBy('name')
-                ->get();
-
-            return view('seller.private-pricing', compact('levels'));
-        }
-
-        if ($user && $user->isTradeSeller()) {
-            return redirect()->route('seller.trade.packages');
-        }
-
-        // Guest: show both private and trade pricing
         $privateLevels = MembershipLevel::query()
             ->where('seller_type', MembershipLevel::SELLER_TYPE_PRIVATE)
             ->where('is_active', true)

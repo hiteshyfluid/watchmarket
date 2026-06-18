@@ -115,7 +115,11 @@
                         @forelse($listings as $advert)
                             <div class="rounded-2xl border border-[#d9d9d9] bg-white p-5" x-data="{ openAction: false }">
                                 <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
+                                    @if($advert->status !== \App\Models\Advert::STATUS_DRAFT)
+                                    <a href="{{ route('market.show', $advert) }}" class="flex flex-col sm:flex-row gap-4 cursor-pointer no-underline text-inherit hover:no-underline">
+                                    @else
                                     <div class="flex flex-col sm:flex-row gap-4">
+                                    @endif
                                         <div class="w-full sm:w-28 h-52 sm:h-28 rounded-xl overflow-hidden bg-[#f2f2f2] shrink-0">
                                             @if($advert->mainImageUrl())
                                                 <img src="{{ $advert->mainImageUrl() }}" alt="{{ $advert->title }}" class="w-full h-full object-cover">
@@ -137,7 +141,11 @@
                                                 </span>
                                             </div>
                                         </div>
+                                    @if($advert->status !== \App\Models\Advert::STATUS_DRAFT)
+                                    </a>
+                                    @else
                                     </div>
+                                    @endif
 
                                     <div class="relative xl:ml-4">
                                         <div class="flex items-center justify-between sm:justify-start gap-3">

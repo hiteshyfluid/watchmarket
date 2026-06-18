@@ -24,6 +24,23 @@
         font-size: 16px;
     }
 
+    a,
+    button,
+    [type="submit"],
+    [type="button"],
+    [type="reset"],
+    [role="button"],
+    select,
+    label[for] {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    [type="submit"]:disabled,
+    [type="button"]:disabled {
+        cursor: not-allowed;
+    }
+
     h1 {
         font-size: clamp(2.25rem, 5vw, 3.75rem);
         font-weight: 500;
@@ -52,5 +69,39 @@
         max-width: 1280px;
         margin-left: auto;
         margin-right: auto;
+    }
+}
+
+@layer components {
+    /* Slide-shine hover animation on all buttons */
+    button:not(:disabled):not([class*="cursor-not-allowed"]),
+    [type="submit"]:not(:disabled),
+    [type="button"]:not(:disabled):not([class*="cursor-not-allowed"]) {
+        position: relative;
+        overflow: hidden;
+    }
+
+    button:not(:disabled):not([class*="cursor-not-allowed"])::before,
+    [type="submit"]:not(:disabled)::before,
+    [type="button"]:not(:disabled):not([class*="cursor-not-allowed"])::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            105deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.14) 50%,
+            transparent 70%
+        );
+        transform: translateX(-100%);
+        transition: transform 0.45s ease;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    button:not(:disabled):not([class*="cursor-not-allowed"]):hover::before,
+    [type="submit"]:not(:disabled):hover::before,
+    [type="button"]:not(:disabled):not([class*="cursor-not-allowed"]):hover::before {
+        transform: translateX(100%);
     }
 }

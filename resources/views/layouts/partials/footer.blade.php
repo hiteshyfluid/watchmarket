@@ -25,17 +25,16 @@
                 <ul class="space-y-3 text-[14px]">
                     <li><a href="{{ route('sell-watch') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Create Listing</a></li>
                     <li><a href="{{ route('seller.pricing') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Pricing</a></li>
-                    <li><a href="{{ route('seller.trade.packages') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Dealer Plans</a></li>
                 </ul>
             </div>
 
             <div>
                 <h4 class="text-white text-[18px] font-semibold mb-5">Support</h4>
                 <ul class="space-y-3 text-[14px]">
-                    <li><a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Help Centre</a></li>
-                    <li><a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Safety Tips</a></li>
+                    <li><a href="{{ route('help.index') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Help Centre</a></li>
+                    <li><a href="{{ route('safety.tips') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Safety Tips</a></li>
                     <li><a href="{{ route('contact.show') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Contact Us</a></li>
-                    <li><a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Report a Listing</a></li>
+                    <li><a href="{{ route('report-listing.show') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Report a Listing</a></li>
                 </ul>
             </div>
         </div>

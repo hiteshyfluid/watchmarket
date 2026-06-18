@@ -1,4 +1,6 @@
 <x-main-layout>
+    <x-page-banner title="Pricing" />
+
     @php
         $privatePackageData = $privateLevels->map(function ($l) {
             $expLabel = $l->expirationLabel();
