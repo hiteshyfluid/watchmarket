@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Advert;
 use App\Models\MembershipLevel;
 use App\Models\MembershipOrder;
+use App\Models\MembershipSubscription;
 use App\Models\User;
 use App\Services\MembershipPurchaseService;
 use App\Services\StripeCheckoutService;
@@ -86,14 +87,22 @@ class SellerController extends Controller
     public function tradePackages()
     {
         $levels = MembershipLevel::query()
-            ->where('seller_type', MembershipLevel::SELLER_TYPE_TRADE)
+            ->whereIn('seller_type', [MembershipLevel::SELLER_TYPE_TRADE, MembershipLevel::SELLER_TYPE_BOTH])
             ->where('is_active', true)
             ->where('allow_signups', true)
             ->orderBy('initial_payment')
             ->orderBy('name')
             ->get();
 
-        return view('seller.trade-packages', compact('levels'));
+        $activeSubscription = auth()->check()
+            ? MembershipSubscription::query()
+                ->where('user_id', auth()->id())
+                ->where('status', 'active')
+                ->latest('id')
+                ->first()
+            : null;
+
+        return view('seller.trade-packages', compact('levels', 'activeSubscription'));
     }
 
     public function tradeCheckout(MembershipLevel $level)

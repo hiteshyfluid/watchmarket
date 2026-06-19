@@ -316,6 +316,17 @@
                         </table>
                     </div>
                 </div>
+
+                {{-- Change Package Button --}}
+                @if($tradePackages->isNotEmpty())
+                <div class="mt-5 flex justify-end">
+                    <a href="{{ route('seller.trade.packages') }}"
+                        class="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-black text-white text-[14px] font-semibold hover:bg-[#222] transition no-underline">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                        Change Package
+                    </a>
+                </div>
+                @endif
             @elseif($tab === 'invoices')
                 <div class="mt-8 rounded-2xl border border-[#d9d9d9] bg-white p-6">
                     <h2 class="text-[22px] font-semibold text-[#111] mb-6">Invoices</h2>

@@ -3,6 +3,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-flash-messages class="mb-8" />
 
+            @php $currentLevelId = $activeSubscription?->level_id; @endphp
+
             @if(auth()->check() && auth()->user()->isPrivateSeller())
             <div class="mb-8 rounded-2xl border border-[#cfd8e3] bg-[#eef3f8] px-6 py-5">
                 <h3 class="text-[17px] font-semibold text-[#1f3a57]">Upgrading to a Trade Seller</h3>
@@ -23,9 +25,13 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 @forelse($levels as $level)
-                <div class="bg-white border border-[#e0e0e0] rounded overflow-hidden flex flex-col shadow-sm hover:shadow-md transition">
+                @php $isCurrent = $currentLevelId && $currentLevelId === $level->id; @endphp
+                <div class="bg-white border {{ $isCurrent ? 'border-[#a5832f]' : 'border-[#e0e0e0]' }} rounded overflow-hidden flex flex-col shadow-sm {{ $isCurrent ? '' : 'hover:shadow-md' }} transition">
                     {{-- Card Header --}}
-                    <div class="bg-[#f0f0f0] px-5 py-5 text-center border-b border-[#e0e0e0]">
+                    <div class="{{ $isCurrent ? 'bg-[#f6efe0]' : 'bg-[#f0f0f0]' }} px-5 py-5 text-center border-b {{ $isCurrent ? 'border-[#e4d2a1]' : 'border-[#e0e0e0]' }} relative">
+                        @if($isCurrent)
+                            <span class="absolute top-2 right-2 text-[10px] font-bold bg-[#d4b160] text-[#111] px-2 py-0.5 rounded-full uppercase tracking-wide">Current</span>
+                        @endif
                         <h3 class="text-[22px] font-bold text-[#111] uppercase">{{ $level->name }}</h3>
                         <p class="text-[13px] text-[#777] mt-1">{{ $level->has_recurring ? 'Monthly subscription' : 'One-time payment' }}</p>
                     </div>
@@ -52,10 +58,17 @@
 
                     {{-- CTA --}}
                     <div class="px-5 py-5 border-t border-[#efefef]">
-                        <a href="{{ route('seller.trade.checkout', $level) }}"
-                           class="inline-flex items-center justify-center w-full bg-black text-white font-bold py-3 text-[13px] uppercase tracking-widest hover:bg-[#222] transition no-underline">
-                            Select Package
-                        </a>
+                        @if($isCurrent)
+                            <button type="button" disabled
+                                class="inline-flex items-center justify-center w-full bg-[#e8d9a0] text-[#7a5c1a] font-bold py-3 text-[13px] uppercase tracking-widest cursor-default">
+                                Current Package
+                            </button>
+                        @else
+                            <a href="{{ route('seller.trade.checkout', $level) }}"
+                               class="inline-flex items-center justify-center w-full bg-black text-white font-bold py-3 text-[13px] uppercase tracking-widest hover:bg-[#222] transition no-underline">
+                                Select Package
+                            </a>
+                        @endif
                     </div>
                 </div>
                 @empty

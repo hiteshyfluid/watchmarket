@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Advert;
+use App\Models\MembershipLevel;
 use App\Models\MembershipOrder;
 use App\Models\MembershipSubscription;
 use Illuminate\Http\Request;
@@ -61,6 +62,17 @@ class AccountController extends Controller
             ->latest('id')
             ->get();
 
+        $activeSubscription = $subscriptions->where('status', 'active')->first();
+
+        $tradePackages = $user->isTradeSeller()
+            ? MembershipLevel::query()
+                ->whereIn('seller_type', [MembershipLevel::SELLER_TYPE_TRADE, MembershipLevel::SELLER_TYPE_BOTH])
+                ->where('is_active', true)
+                ->where('allow_signups', true)
+                ->orderBy('billing_amount')
+                ->get()
+            : collect();
+
         $orders = MembershipOrder::query()
             ->with('level')
             ->where('user_id', $user->id)
@@ -78,6 +90,8 @@ class AccountController extends Controller
             'stats',
             'tradeUsage',
             'subscriptions',
+            'activeSubscription',
+            'tradePackages',
             'orders'
         ));
     }
