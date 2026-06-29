@@ -132,6 +132,13 @@
                                     <svg class="w-5 h-5 text-[#222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg>
                                     <span class="text-[16px]">Messages</span>
                                 </a>
+                                @if($authUser->isPrivateSeller())
+                                <div class="border-t border-[#e3e3e3] my-1"></div>
+                                <a href="{{ route('seller.trade.packages') }}" class="px-5 py-2.5 flex items-center gap-3 no-underline text-[#8c6a22] hover:bg-[#f6efe0]">
+                                    <svg class="w-5 h-5 text-[#8c6a22]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                    <span class="text-[16px] font-semibold">Upgrade to Trade Seller</span>
+                                </a>
+                                @endif
                                 </a>
                             </div>
 
@@ -274,6 +281,13 @@
                                 <svg class="w-5 h-5 text-[#222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg>
                                 <span class="text-[15px]">Messages</span>
                             </a>
+                            @if($authUser->isPrivateSeller())
+                            <div class="border-t border-[#ececec] my-1"></div>
+                            <a href="{{ route('seller.trade.packages') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 no-underline text-[#8c6a22] hover:bg-[#f6efe0]">
+                                <svg class="w-5 h-5 text-[#8c6a22]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                <span class="text-[15px] font-semibold">Upgrade to Trade Seller</span>
+                            </a>
+                            @endif
                             </a>
                         </div>
 
