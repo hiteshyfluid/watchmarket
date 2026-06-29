@@ -185,6 +185,9 @@
                                             @else
                                                 {{-- Active / Paused / Expired --}}
                                                 <a href="{{ route('adverts.edit', $advert) }}" class="block px-4 py-3 text-[16px] text-[#222] no-underline hover:bg-[#eeeeee]">Edit Listing</a>
+                                                @if(auth()->user()->isPrivateSeller() && in_array($advert->status, [\App\Models\Advert::STATUS_ACTIVE, \App\Models\Advert::STATUS_PAUSED]))
+                                                    <a href="{{ route('seller.private.upgrade.packages', $advert) }}" class="block px-4 py-3 text-[16px] text-[#0066cc] no-underline hover:bg-[#eeeeee]">Upgrade Package</a>
+                                                @endif
                                                 @if(in_array($advert->status, [\App\Models\Advert::STATUS_ACTIVE, \App\Models\Advert::STATUS_PAUSED]))
                                                     <form method="POST" action="{{ route('adverts.mark-sold', $advert) }}">
                                                         @csrf @method('PATCH')

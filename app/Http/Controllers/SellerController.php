@@ -350,6 +350,139 @@ class SellerController extends Controller
             ->with('error', 'Stripe checkout was cancelled. You can try again whenever you are ready.');
     }
 
+    public function privateUpgradePackages(Advert $advert)
+    {
+        $user = auth()->user();
+        abort_unless($user->isPrivateSeller(), 403);
+        $this->ensurePrivateAdvertOwner($advert, $user->id);
+        abort_unless(in_array($advert->status, [Advert::STATUS_ACTIVE, Advert::STATUS_PAUSED]), 404);
+
+        $levels = MembershipLevel::query()
+            ->where('seller_type', MembershipLevel::SELLER_TYPE_PRIVATE)
+            ->where('is_active', true)
+            ->where('allow_signups', true)
+            ->where(function ($q) use ($advert) {
+                $q->whereNull('private_min_advert_price')
+                    ->orWhere('private_min_advert_price', '<=', $advert->price);
+            })
+            ->where(function ($q) use ($advert) {
+                $q->whereNull('private_max_advert_price')
+                    ->orWhere('private_max_advert_price', '>=', $advert->price);
+            })
+            ->orderBy('initial_payment')
+            ->orderBy('name')
+            ->get();
+
+        return view('seller.private-upgrade-packages', compact('levels', 'advert'));
+    }
+
+    public function privateUpgradeCheckout(Advert $advert, MembershipLevel $level)
+    {
+        $user = auth()->user();
+        abort_unless($user->isPrivateSeller(), 403);
+        $this->ensurePrivateAdvertOwner($advert, $user->id);
+        abort_unless(in_array($advert->status, [Advert::STATUS_ACTIVE, Advert::STATUS_PAUSED]), 404);
+        $this->ensurePrivateLevelForAdvert($level, (float) $advert->price);
+
+        $requiresStripe = $this->stripeCheckoutService->requiresStripe($level, MembershipPurchaseService::TYPE_PRIVATE);
+        $stripeMode = $this->stripeCheckoutService->modeLabel();
+        $expiryDate = $this->membershipPurchaseService->endDateForLevel($level);
+
+        return view('seller.private-upgrade-checkout', compact('level', 'user', 'advert', 'requiresStripe', 'stripeMode', 'expiryDate'));
+    }
+
+    public function processPrivateUpgradeCheckout(Request $request, Advert $advert, MembershipLevel $level)
+    {
+        $user = auth()->user();
+        abort_unless($user->isPrivateSeller(), 403);
+        $this->ensurePrivateAdvertOwner($advert, $user->id);
+        abort_unless(in_array($advert->status, [Advert::STATUS_ACTIVE, Advert::STATUS_PAUSED]), 404);
+        $this->ensurePrivateLevelForAdvert($level, (float) $advert->price);
+
+        $validated = $this->validateBillingData($request, $user->id);
+        $checkoutType = MembershipPurchaseService::TYPE_PRIVATE;
+        $requiresStripe = $this->stripeCheckoutService->requiresStripe($level, $checkoutType);
+
+        if ($requiresStripe && !$this->stripeCheckoutService->isConfiguredForCheckout($level, $checkoutType)) {
+            return back()->withInput()->with('error', 'Stripe is not configured for the active mode yet. Please ask the admin to add the Stripe keys first.');
+        }
+
+        $order = $this->membershipPurchaseService->createPendingPrivateOrder(
+            $user,
+            $advert,
+            $level,
+            $validated,
+            $this->stripeCheckoutService->amountDueNow($level, $checkoutType)
+        );
+
+        if (!$requiresStripe) {
+            $this->membershipPurchaseService->completeOrder($order, [
+                'gateway' => 'Free Checkout',
+                'ordered_at' => now(),
+            ]);
+
+            return redirect()->route('seller.private.upgrade.thank-you', $order)
+                ->with('success', 'Package upgraded successfully.');
+        }
+
+        try {
+            $session = $this->stripeCheckoutService->createCheckoutSession(
+                $order,
+                $level,
+                $validated,
+                $checkoutType,
+                route('seller.private.upgrade.thank-you', $order) . '?session_id={CHECKOUT_SESSION_ID}',
+                route('seller.private.upgrade.checkout.cancel', [$advert, $level, $order])
+            );
+        } catch (ApiErrorException|\RuntimeException $e) {
+            $this->membershipPurchaseService->markOrderFailed($order, 'Stripe Checkout (' . $this->stripeCheckoutService->modeLabel() . ')');
+
+            return back()->withInput()->with('error', 'We could not start Stripe checkout right now. Please try again.');
+        }
+
+        $order->update([
+            'gateway' => 'Stripe Checkout (' . $this->stripeCheckoutService->modeLabel() . ')',
+        ]);
+
+        return redirect()->away($session->url);
+    }
+
+    public function privateUpgradeThankYou(Request $request, MembershipOrder $order)
+    {
+        $user = auth()->user();
+        abort_unless($order->user_id === $user->id, 403);
+        abort_unless($order->level?->seller_type === MembershipLevel::SELLER_TYPE_PRIVATE, 404);
+
+        $resolvedOrder = $this->resolvePendingOrderAfterCheckout(
+            $order,
+            $request,
+            'seller.private.upgrade.checkout',
+            [$order->advert, $order->level]
+        );
+
+        if ($resolvedOrder instanceof RedirectResponse) {
+            return $resolvedOrder;
+        }
+
+        $resolvedOrder->load(['level', 'user', 'advert']);
+
+        return view('seller.private-upgrade-thank-you', ['order' => $resolvedOrder]);
+    }
+
+    public function cancelPrivateUpgradeCheckout(Advert $advert, MembershipLevel $level, MembershipOrder $order)
+    {
+        $this->ensurePrivateAdvertOwner($advert, (int) auth()->id());
+        $this->ensurePrivateLevelForAdvert($level, (float) $advert->price);
+        abort_unless($order->user_id === auth()->id(), 403);
+        abort_unless((int) $order->membership_level_id === (int) $level->id, 404);
+        abort_unless((int) $order->advert_id === (int) $advert->id, 404);
+
+        $this->membershipPurchaseService->markOrderCancelled($order);
+
+        return redirect()->route('seller.private.upgrade.checkout', [$advert, $level])
+            ->with('error', 'Stripe checkout was cancelled. You can try again whenever you are ready.');
+    }
+
     private function ensureTradeLevel(MembershipLevel $level): void
     {
         abort_unless(

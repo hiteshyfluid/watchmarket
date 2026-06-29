@@ -53,6 +53,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/private/checkout/{advert}/{level}', [App\Http\Controllers\SellerController::class, 'processPrivateCheckout'])->name('seller.private.checkout.process');
     Route::get('/private/checkout/{advert}/{level}/cancel/{order}', [App\Http\Controllers\SellerController::class, 'cancelPrivateCheckout'])->name('seller.private.checkout.cancel');
     Route::get('/private/thank-you/{order}', [App\Http\Controllers\SellerController::class, 'privateThankYou'])->name('seller.private.thank-you');
+    Route::get('/private/upgrade/{advert}', [App\Http\Controllers\SellerController::class, 'privateUpgradePackages'])->name('seller.private.upgrade.packages');
+    Route::get('/private/upgrade-checkout/{advert}/{level}', [App\Http\Controllers\SellerController::class, 'privateUpgradeCheckout'])->name('seller.private.upgrade.checkout');
+    Route::post('/private/upgrade-checkout/{advert}/{level}', [App\Http\Controllers\SellerController::class, 'processPrivateUpgradeCheckout'])->name('seller.private.upgrade.checkout.process');
+    Route::get('/private/upgrade-checkout/{advert}/{level}/cancel/{order}', [App\Http\Controllers\SellerController::class, 'cancelPrivateUpgradeCheckout'])->name('seller.private.upgrade.checkout.cancel');
+    Route::get('/private/upgrade-thank-you/{order}', [App\Http\Controllers\SellerController::class, 'privateUpgradeThankYou'])->name('seller.private.upgrade.thank-you');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
