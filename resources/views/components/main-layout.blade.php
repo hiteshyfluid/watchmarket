@@ -24,5 +24,7 @@
         </main>
 
         @include('layouts.partials.footer')
+
+        @include('layouts.partials.maintenance-overlay')
     </body>
 </html>

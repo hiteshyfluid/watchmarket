@@ -33,5 +33,7 @@
                 {{ $slot }}
             </main>
         </div>
+
+        @include('layouts.partials.maintenance-overlay')
     </body>
 </html>

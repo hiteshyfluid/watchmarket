@@ -91,6 +91,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // ----------------------------------------------------------------
+// Superadmin-only login (no registration link)
+// ----------------------------------------------------------------
+Route::middleware('guest')->group(function () {
+    Route::get('superadmin/login', [\App\Http\Controllers\Auth\SuperAdminLoginController::class, 'create'])->name('superadmin.login');
+    Route::post('superadmin/login', [\App\Http\Controllers\Auth\SuperAdminLoginController::class, 'store']);
+});
+
+// ----------------------------------------------------------------
 // Admin panel
 // ----------------------------------------------------------------
 Route::middleware(['auth', 'verified', App\Http\Middleware\AdminMiddleware::class])
@@ -149,6 +157,10 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\AdminMiddleware::clas
         Route::get('/listing-reports', [App\Http\Controllers\Admin\ListingReportController::class, 'index'])->name('listing-reports.index');
         Route::get('/listing-reports/{listingReport}', [App\Http\Controllers\Admin\ListingReportController::class, 'show'])->name('listing-reports.show');
         Route::patch('/listing-reports/{listingReport}/status', [App\Http\Controllers\Admin\ListingReportController::class, 'updateStatus'])->name('listing-reports.status');
+
+        Route::get('/maintenance', [App\Http\Controllers\Admin\MaintenanceModeController::class, 'edit'])->name('maintenance.edit');
+        Route::put('/maintenance', [App\Http\Controllers\Admin\MaintenanceModeController::class, 'update'])->name('maintenance.update');
+        Route::put('/maintenance/password', [App\Http\Controllers\Admin\MaintenanceModeController::class, 'updatePassword'])->name('maintenance.password');
     });
 
 require __DIR__.'/auth.php';
