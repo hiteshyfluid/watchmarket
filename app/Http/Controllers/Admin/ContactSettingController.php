@@ -12,7 +12,7 @@ class ContactSettingController extends Controller
 {
     public function edit(): View
     {
-        $emails = SiteSetting::getValue('contact_recipient_emails', 'wp@fluidlabs.co.uk');
+        $emails = SiteSetting::getValue('contact_recipient_emails', 'support@watchmarket.co.uk, andrew@watchmarket.co.uk, henry@watchmarket.co.uk, wp@fluidlabs.co.uk');
 
         return view('admin.contact-settings.edit', compact('emails'));
     }

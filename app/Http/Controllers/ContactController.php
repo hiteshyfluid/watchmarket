@@ -26,7 +26,7 @@ class ContactController extends Controller
             'message' => 'required|string|max:5000',
         ]);
 
-        $recipients = collect(preg_split('/[,\r\n]+/', SiteSetting::getValue('contact_recipient_emails', 'wp@fluidlabs.co.uk')))
+        $recipients = collect(preg_split('/[,\r\n]+/', SiteSetting::getValue('contact_recipient_emails', 'support@watchmarket.co.uk, andrew@watchmarket.co.uk, henry@watchmarket.co.uk, wp@fluidlabs.co.uk')))
             ->map(fn ($email) => trim($email))
             ->filter()
             ->values()
