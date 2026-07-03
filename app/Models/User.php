@@ -33,6 +33,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'country',
         'password',
         'role',
+        'company_name',
+        'username',
     ];
 
     /**
@@ -98,6 +100,32 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->isPrivateSeller() || $this->isTradeSeller();
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->username)) {
+                $user->username = static::generateUniqueUsername();
+            }
+        });
+    }
+
+    /**
+     * Generates a default username like "user9909" / "user0001".
+     * Falls back to more digits if the 4-digit range is exhausted.
+     */
+    public static function generateUniqueUsername(): string
+    {
+        $attempt = 0;
+
+        do {
+            $digits = $attempt < 50 ? 4 : 6;
+            $username = 'user' . str_pad((string) random_int(0, (10 ** $digits) - 1), $digits, '0', STR_PAD_LEFT);
+            $attempt++;
+        } while (static::where('username', $username)->exists());
+
+        return $username;
+    }
+
     public function getNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
@@ -111,6 +139,24 @@ class User extends Authenticatable implements MustVerifyEmail
             self::ROLE_TRADE_SELLER => 'Trade Seller',
             default => 'Customer',
         };
+    }
+
+    /**
+     * Name shown publicly (listing seller box, Messages, etc).
+     * Private sellers never have their real name shown publicly - their
+     * username is shown instead. Trade sellers show their company name.
+     */
+    public function publicDisplayName(): string
+    {
+        if ($this->isPrivateSeller()) {
+            return $this->username ?: 'Private Seller';
+        }
+
+        if ($this->isTradeSeller()) {
+            return $this->company_name ?: $this->name;
+        }
+
+        return $this->name;
     }
 
     public function tradeAdvertUsage(): ?array

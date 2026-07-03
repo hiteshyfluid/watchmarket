@@ -132,7 +132,7 @@
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <div class="text-[15px] text-[#888]">Seller</div>
-                            <div class="text-[18px] text-[#111] font-semibold mt-1">{{ $advert->user->name ?? 'Seller' }}</div>
+                            <div class="text-[18px] text-[#111] font-semibold mt-1">{{ $advert->user?->publicDisplayName() ?? 'Seller' }}</div>
                             @if($advert->user)
                                 <span class="inline-flex items-center rounded-full border px-3 py-1 text-[12px] font-semibold mt-2 {{ $advert->user->isTradeSeller() ? 'border-[#e4d2a1] bg-[#f6efe0] text-[#8c6a22]' : ($advert->user->isPrivateSeller() ? 'border-[#cfd8e3] bg-[#eef3f8] text-[#35516f]' : 'border-[#dddddd] bg-white text-[#555]') }}">
                                     {{ $advert->user->roleLabel() }}

@@ -163,32 +163,32 @@
                     </aside>
 
                     <div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
+                        <div class="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5 lg:gap-7">
                             @forelse($adverts as $advert)
-                                <a href="{{ route('market.show', $advert) }}" class="group rounded-2xl overflow-hidden border border-[#d9d9d9] bg-[#f8f8f8] no-underline text-[#111] transition-all duration-200 hover:border-[#d4b160] hover:shadow-[0_14px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1">
-                                    <div class="relative h-72 bg-[#e9e9e9] overflow-hidden">
+                                <a href="{{ route('market.show', $advert) }}" class="group rounded-xl sm:rounded-2xl overflow-hidden border border-[#d9d9d9] bg-[#f8f8f8] no-underline text-[#111] transition-all duration-200 hover:border-[#d4b160] hover:shadow-[0_14px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1">
+                                    <div class="relative h-32 sm:h-56 lg:h-72 bg-[#e9e9e9] overflow-hidden">
                                         @if($advert->mainImageUrl())
                                             <img src="{{ $advert->mainImageUrl() }}" alt="{{ $advert->title }}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]">
                                         @endif
                                         @if($advert->is_featured)
-                                            <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-[12px] font-semibold bg-[#d4b160] text-black">Featured</span>
+                                            <span class="absolute top-1.5 left-1.5 sm:top-3 sm:left-3 px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[12px] font-semibold bg-[#d4b160] text-black">Featured</span>
                                         @endif
                                     </div>
-                                    <div class="px-4 py-4">
-                                        <div class="text-[13px] uppercase text-[#c7a552] tracking-wide">{{ $advert->brand->name ?? 'Brand' }}</div>
-                                        <div class="mt-1 text-[20px] leading-7 font-semibold">{{ \Illuminate\Support\Str::limit($advert->title, 32) }}</div>
-                                        <div class="mt-1 text-[13px] text-[#5b5b5b]">Ref. #{{ $advert->id }}</div>
-                                        <div class="mt-3 flex flex-wrap gap-2 text-[12px]">
-                                            @if($advert->condition)<span class="px-2 py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->condition->name }}</span>@endif
-                                            @if($advert->year)<span class="px-2 py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->year->name }}</span>@endif
-                                            @if($advert->box && $advert->paper)<span class="px-2 py-1 rounded-full bg-[#ececec] text-[#454545]">Box &amp; Papers</span>@endif
+                                    <div class="px-2.5 py-2.5 sm:px-4 sm:py-4">
+                                        <div class="text-[10px] sm:text-[13px] uppercase text-[#c7a552] tracking-wide">{{ $advert->brand->name ?? 'Brand' }}</div>
+                                        <div class="mt-0.5 sm:mt-1 text-[13px] sm:text-[20px] leading-4 sm:leading-7 font-semibold truncate">{{ \Illuminate\Support\Str::limit($advert->title, 32) }}</div>
+                                        <div class="mt-0.5 sm:mt-1 text-[10px] sm:text-[13px] text-[#5b5b5b]">Ref. #{{ $advert->id }}</div>
+                                        <div class="mt-1.5 sm:mt-3 flex flex-wrap gap-1 sm:gap-2 text-[9px] sm:text-[12px]">
+                                            @if($advert->condition)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->condition->name }}</span>@endif
+                                            @if($advert->year)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->year->name }}</span>@endif
+                                            @if($advert->box && $advert->paper)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">Box &amp; Papers</span>@endif
                                         </div>
-                                        <div class="my-4 h-px bg-[#dddddd]"></div>
+                                        <div class="my-2 sm:my-4 h-px bg-[#dddddd]"></div>
                                         <div class="flex items-end gap-1">
-                                            <div class="text-[20px] leading-none font-semibold">&pound;{{ number_format((float) $advert->price, 0) }}</div>
-                                            <span class="text-[12px] text-[#666] mb-1">{{ $advert->price_negotiable ? 'ONO' : '' }}</span>
+                                            <div class="text-[14px] sm:text-[20px] leading-none font-semibold">&pound;{{ number_format((float) $advert->price, 0) }}</div>
+                                            <span class="text-[10px] sm:text-[12px] text-[#666] mb-0.5 sm:mb-1">{{ $advert->price_negotiable ? 'ONO' : '' }}</span>
                                         </div>
-                                        <div class="mt-3 text-[14px] text-[#666]">{{ $advert->user?->city ?: 'Location not set' }}</div>
+                                        <div class="mt-1 sm:mt-3 text-[11px] sm:text-[14px] text-[#666] truncate">{{ $advert->user?->city ?: 'Location not set' }}</div>
                                     </div>
                                 </a>
                             @empty

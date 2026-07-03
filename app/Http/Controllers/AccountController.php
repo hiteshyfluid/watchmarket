@@ -100,7 +100,7 @@ class AccountController extends Controller
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
+        $rules = [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
@@ -109,7 +109,17 @@ class AccountController extends Controller
             'city' => ['nullable', 'string', 'max:255'],
             'postal_code' => ['nullable', 'string', 'max:20'],
             'country' => ['nullable', 'string', 'max:255'],
-        ]);
+        ];
+
+        if ($user->isTradeSeller()) {
+            $rules['company_name'] = ['nullable', 'string', 'max:255'];
+        }
+
+        if ($user->isSeller()) {
+            $rules['username'] = ['required', 'string', 'max:50', 'alpha_dash', 'unique:users,username,' . $user->id];
+        }
+
+        $validated = $request->validate($rules);
 
         if (isset($validated['email']) && $validated['email'] !== $user->email) {
             $validated['email_verified_at'] = null;

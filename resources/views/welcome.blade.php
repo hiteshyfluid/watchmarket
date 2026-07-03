@@ -71,8 +71,8 @@
                         </svg>
                     </span>
                     <div>
-                        <h3 class="text-[18px] font-semibold text-[#111] leading-tight">Safe Meetings</h3>
-                        <p class="text-[14px] text-[#5d5d5d] mt-1">Verified locations &amp; jewellers</p>
+                        <h3 class="text-[18px] font-semibold text-[#111] leading-tight">Quickly Buy and Sell your Watch</h3>
+                        <p class="text-[14px] text-[#5d5d5d] mt-1">No commission charges</p>
                     </div>
                 </div>
             </div>
@@ -113,30 +113,30 @@
                 <a href="{{ route('market.index') }}" class="text-[#d4b160] text-[14px] font-medium no-underline hover:underline">View all &nbsp;&rsaquo;</a>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
                 @forelse($featuredAdverts as $advert)
-                    <a href="{{ route('market.show', $advert) }}" class="rounded-2xl overflow-hidden border border-[#2a2a2a] bg-[#141211] no-underline text-white">
-                        <div class="relative h-72 bg-[#1f1f1f]">
+                    <a href="{{ route('market.show', $advert) }}" class="rounded-xl sm:rounded-2xl overflow-hidden border border-[#2a2a2a] bg-[#141211] no-underline text-white">
+                        <div class="relative h-32 sm:h-56 lg:h-72 bg-[#1f1f1f]">
                             @if($advert->mainImageUrl())
                                 <img src="{{ $advert->mainImageUrl() }}" alt="{{ $advert->title }}" class="w-full h-full object-cover">
                             @endif
-                            <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-[12px] font-semibold bg-[#d4b160] text-black">Featured</span>
+                            <span class="absolute top-1.5 left-1.5 sm:top-3 sm:left-3 px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[12px] font-semibold bg-[#d4b160] text-black">Featured</span>
                         </div>
-                        <div class="px-4 py-4">
-                            <div class="text-[13px] uppercase text-[#d4b160] tracking-wide">{{ $advert->brand->name ?? 'Brand' }}</div>
-                            <div class="mt-1 text-[20px] leading-9 font-semibold">{{ \Illuminate\Support\Str::limit($advert->title, 28) }}</div>
-                            <div class="mt-1 text-[13px] text-white/70">Ref. #{{ $advert->id }}</div>
-                            <div class="mt-3 flex flex-wrap gap-2 text-[12px]">
-                                @if($advert->condition)<span class="px-2 py-1 rounded-full bg-[#2b2b2b]">{{ $advert->condition->name }}</span>@endif
-                                @if($advert->year)<span class="px-2 py-1 rounded-full bg-[#2b2b2b]">{{ $advert->year->name }}</span>@endif
-                                @if($advert->box)<span class="px-2 py-1 rounded-full bg-[#2b2b2b]">Box</span>@endif
-                                @if($advert->paper)<span class="px-2 py-1 rounded-full bg-[#2b2b2b]">Papers</span>@endif
+                        <div class="px-2.5 py-2.5 sm:px-4 sm:py-4">
+                            <div class="text-[10px] sm:text-[13px] uppercase text-[#d4b160] tracking-wide">{{ $advert->brand->name ?? 'Brand' }}</div>
+                            <div class="mt-0.5 sm:mt-1 text-[13px] sm:text-[20px] leading-4 sm:leading-9 font-semibold truncate">{{ \Illuminate\Support\Str::limit($advert->title, 28) }}</div>
+                            <div class="mt-0.5 sm:mt-1 text-[10px] sm:text-[13px] text-white/70">Ref. #{{ $advert->id }}</div>
+                            <div class="mt-1.5 sm:mt-3 flex flex-wrap gap-1 sm:gap-2 text-[9px] sm:text-[12px]">
+                                @if($advert->condition)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">{{ $advert->condition->name }}</span>@endif
+                                @if($advert->year)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">{{ $advert->year->name }}</span>@endif
+                                @if($advert->box)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">Box</span>@endif
+                                @if($advert->paper)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">Papers</span>@endif
                             </div>
-                            <div class="my-4 h-px bg-white/20"></div>
-                            <div class="text-[20px] font-semibold leading-none">&pound;{{ number_format((float) $advert->price, 0) }}</div>
-                            <div class="mt-3 text-[14px] text-white/70 flex items-center gap-1.5">
-                                <svg class="w-4 h-4 text-[#7a7a7a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.2" stroke-width="1.8"></circle></svg>
-                                {{ $advert->user?->city ?: 'Location not set' }}
+                            <div class="my-2 sm:my-4 h-px bg-white/20"></div>
+                            <div class="text-[14px] sm:text-[20px] font-semibold leading-none">&pound;{{ number_format((float) $advert->price, 0) }}</div>
+                            <div class="mt-1 sm:mt-3 text-[11px] sm:text-[14px] text-white/70 flex items-center gap-1 sm:gap-1.5 truncate">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 text-[#7a7a7a] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.2" stroke-width="1.8"></circle></svg>
+                                <span class="truncate">{{ $advert->user?->city ?: 'Location not set' }}</span>
                             </div>
                         </div>
                     </a>
@@ -156,38 +156,38 @@
                 <a href="{{ route('market.index') }}" class="text-[#c7a552] text-[14px] font-medium no-underline hover:underline">View all &nbsp;&rsaquo;</a>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
                 @forelse($recentAdverts as $advert)
-                    <a href="{{ route('market.show', $advert) }}" class="group rounded-2xl overflow-hidden border border-[#d9d9d9] bg-[#f8f8f8] no-underline text-[#111] transition-all duration-200 hover:border-[#d4b160] hover:shadow-[0_14px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1">
-                        <div class="relative h-72 bg-[#e9e9e9] overflow-hidden">
+                    <a href="{{ route('market.show', $advert) }}" class="group rounded-xl sm:rounded-2xl overflow-hidden border border-[#d9d9d9] bg-[#f8f8f8] no-underline text-[#111] transition-all duration-200 hover:border-[#d4b160] hover:shadow-[0_14px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1">
+                        <div class="relative h-32 sm:h-56 lg:h-72 bg-[#e9e9e9] overflow-hidden">
                             @if($advert->mainImageUrl())
                                 <img src="{{ $advert->mainImageUrl() }}" alt="{{ $advert->title }}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]">
                             @endif
                             @if($advert->is_featured)
-                                <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-[12px] font-semibold bg-[#d4b160] text-black">Featured</span>
+                                <span class="absolute top-1.5 left-1.5 sm:top-3 sm:left-3 px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[12px] font-semibold bg-[#d4b160] text-black">Featured</span>
                             @endif
-                            <span class="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/95 border border-[#ddd] flex items-center justify-center text-[#595959]">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            <span class="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-white/95 border border-[#ddd] flex items-center justify-center text-[#595959]">
+                                <svg class="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                             </span>
                         </div>
-                        <div class="px-4 py-4">
-                            <div class="text-[13px] uppercase text-[#c7a552] tracking-wide">{{ $advert->brand->name ?? 'Brand' }}</div>
-                            <div class="mt-1 text-[20px] leading-7 font-semibold">{{ \Illuminate\Support\Str::limit($advert->title, 30) }}</div>
-                            <div class="mt-1 text-[13px] text-[#5b5b5b]">Ref. #{{ $advert->id }}</div>
-                            <div class="mt-3 flex flex-wrap gap-2 text-[12px]">
-                                @if($advert->condition)<span class="px-2 py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->condition->name }}</span>@endif
-                                @if($advert->year)<span class="px-2 py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->year->name }}</span>@endif
-                                @if($advert->box)<span class="px-2 py-1 rounded-full bg-[#ececec] text-[#454545]">Box</span>@endif
-                                @if($advert->paper)<span class="px-2 py-1 rounded-full bg-[#ececec] text-[#454545]">Box &amp; Papers</span>@endif
+                        <div class="px-2.5 py-2.5 sm:px-4 sm:py-4">
+                            <div class="text-[10px] sm:text-[13px] uppercase text-[#c7a552] tracking-wide">{{ $advert->brand->name ?? 'Brand' }}</div>
+                            <div class="mt-0.5 sm:mt-1 text-[13px] sm:text-[20px] leading-4 sm:leading-7 font-semibold truncate">{{ \Illuminate\Support\Str::limit($advert->title, 30) }}</div>
+                            <div class="mt-0.5 sm:mt-1 text-[10px] sm:text-[13px] text-[#5b5b5b]">Ref. #{{ $advert->id }}</div>
+                            <div class="mt-1.5 sm:mt-3 flex flex-wrap gap-1 sm:gap-2 text-[9px] sm:text-[12px]">
+                                @if($advert->condition)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->condition->name }}</span>@endif
+                                @if($advert->year)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->year->name }}</span>@endif
+                                @if($advert->box)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">Box</span>@endif
+                                @if($advert->paper)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">Box &amp; Papers</span>@endif
                             </div>
-                            <div class="my-4 h-px bg-[#dddddd]"></div>
+                            <div class="my-2 sm:my-4 h-px bg-[#dddddd]"></div>
                             <div class="flex items-end gap-1">
-                                <div class="text-[20px] leading-none font-semibold">&pound;{{ number_format((float) $advert->price, 0) }}</div>
-                                <span class="text-[12px] text-[#666] mb-1">ONO</span>
+                                <div class="text-[14px] sm:text-[20px] leading-none font-semibold">&pound;{{ number_format((float) $advert->price, 0) }}</div>
+                                <span class="text-[10px] sm:text-[12px] text-[#666] mb-0.5 sm:mb-1">ONO</span>
                             </div>
-                            <div class="mt-3 text-[14px] text-[#666] flex items-center gap-1.5">
-                                <svg class="w-4 h-4 text-[#7a7a7a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.2" stroke-width="1.8"></circle></svg>
-                                <span>{{ $advert->user?->city ?: 'Location not set' }}</span>
+                            <div class="mt-1 sm:mt-3 text-[11px] sm:text-[14px] text-[#666] flex items-center gap-1 sm:gap-1.5 truncate">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 text-[#7a7a7a] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.2" stroke-width="1.8"></circle></svg>
+                                <span class="truncate">{{ $advert->user?->city ?: 'Location not set' }}</span>
                             </div>
                         </div>
                     </a>

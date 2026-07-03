@@ -236,6 +236,9 @@
                         <div><span class="text-[#666]">Postal Code:</span> <span class="text-[#111] font-medium">{{ $user->postal_code ?: '-' }}</span></div>
                         <div><span class="text-[#666]">Country:</span> <span class="text-[#111] font-medium">{{ $user->country ?: '-' }}</span></div>
                         <div><span class="text-[#666]">Account Type:</span> <span class="text-[#111] font-medium">{{ $user->roleLabel() }}</span></div>
+                        @if($user->isSeller())
+                            <div><span class="text-[#666]">Username:</span> <span class="text-[#111] font-medium">{{ $user->username ?: '-' }}</span></div>
+                        @endif
                     </div>
                 </div>
             @elseif($tab === 'edit-profile')
@@ -284,6 +287,25 @@
                             <input type="text" name="country" value="{{ old('country', $user->country) }}" class="w-full h-11 border border-[#d1d1d1] rounded-lg px-3 text-[16px]">
                             @error('country')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
+                        @if($user->isTradeSeller())
+                        <div class="md:col-span-2">
+                            <label class="block text-[14px] text-[#444] mb-1">Company Name</label>
+                            <input type="text" name="company_name" value="{{ old('company_name', $user->company_name) }}" placeholder="Shown on your listings instead of your personal name" class="w-full h-11 border border-[#d1d1d1] rounded-lg px-3 text-[16px]">
+                            @error('company_name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                        </div>
+                        @endif
+                        @if($user->isSeller())
+                        <div class="md:col-span-2">
+                            <label class="block text-[14px] text-[#444] mb-1">Username</label>
+                            <input type="text" name="username" value="{{ old('username', $user->username) }}" placeholder="Your unique username" class="w-full h-11 border border-[#d1d1d1] rounded-lg px-3 text-[16px]">
+                            @if($user->isPrivateSeller())
+                                <p class="text-[13px] text-[#777] mt-1">Your real name is never shown publicly. This username is shown instead of "Private Seller" in Messages.</p>
+                            @else
+                                <p class="text-[13px] text-[#777] mt-1">A unique username assigned to your account. You can change it any time.</p>
+                            @endif
+                            @error('username')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                        </div>
+                        @endif
                         <div class="md:col-span-2 pt-2">
                             <button type="submit" class="h-11 px-6 rounded-lg bg-black text-white text-[16px] font-semibold">Save Changes</button>
                         </div>

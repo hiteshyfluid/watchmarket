@@ -9,7 +9,7 @@
                 'title' => $conversation->advert?->title ?? 'Watch Listing',
                 'price' => $conversation->advert?->price,
                 'advert_image' => $conversation->advert?->mainImageUrl(),
-                'other_name' => $other?->name ?? 'User',
+                'other_name' => $other?->publicDisplayName() ?? 'User',
                 'last_message' => $conversation->latestMessage?->message ?? '',
                 'last_time' => optional($conversation->latestMessage?->created_at)?->diffForHumans(),
             ];

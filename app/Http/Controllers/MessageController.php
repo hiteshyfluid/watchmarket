@@ -20,8 +20,8 @@ class MessageController extends Controller
         $conversations = Conversation::query()
             ->with([
                 'advert:id,title,price,main_image',
-                'buyer:id,first_name,last_name',
-                'seller:id,first_name,last_name',
+                'buyer:id,first_name,last_name,role,company_name,username',
+                'seller:id,first_name,last_name,role,company_name,username',
                 'latestMessage',
             ])
             ->where(function ($query) use ($user) {
@@ -72,7 +72,7 @@ class MessageController extends Controller
         $conversation->update(['last_message_at' => $message->created_at ?? now()]);
 
         if ($advert->user) {
-            \Illuminate\Support\Facades\Mail::to($advert->user)->send(new \App\Mail\NewMessageMail($user->name, $advert->title));
+            \Illuminate\Support\Facades\Mail::to($advert->user)->send(new \App\Mail\NewMessageMail($user->publicDisplayName(), $advert->title));
         }
 
         return response()->json([
@@ -88,7 +88,7 @@ class MessageController extends Controller
         abort_unless($this->isParticipant($conversation, $user->id), 403);
 
         $messages = ConversationMessage::query()
-            ->with('sender:id,first_name,last_name')
+            ->with('sender:id,first_name,last_name,role,company_name,username')
             ->where('conversation_id', $conversation->id)
             ->orderBy('id')
             ->get()
@@ -96,7 +96,7 @@ class MessageController extends Controller
                 return [
                     'id' => $message->id,
                     'sender_id' => $message->sender_id,
-                    'sender_name' => $message->sender?->name ?? 'User',
+                    'sender_name' => $message->sender?->publicDisplayName() ?? 'User',
                     'message' => $message->message,
                     'is_mine' => $message->sender_id === $user->id,
                     'time' => optional($message->created_at)->format('H:i'),
@@ -134,7 +134,7 @@ class MessageController extends Controller
 
         $recipient = $user->id === $conversation->buyer_id ? $conversation->seller : $conversation->buyer;
         if ($recipient) {
-            \Illuminate\Support\Facades\Mail::to($recipient)->send(new \App\Mail\NewMessageMail($user->name, $conversation->advert?->title ?? 'Watch Listing'));
+            \Illuminate\Support\Facades\Mail::to($recipient)->send(new \App\Mail\NewMessageMail($user->publicDisplayName(), $conversation->advert?->title ?? 'Watch Listing'));
         }
 
         return response()->json([
@@ -157,8 +157,8 @@ class MessageController extends Controller
         $conversations = Conversation::query()
             ->with([
                 'advert:id,title,price,main_image',
-                'buyer:id,first_name,last_name',
-                'seller:id,first_name,last_name',
+                'buyer:id,first_name,last_name,role,company_name,username',
+                'seller:id,first_name,last_name,role,company_name,username',
                 'latestMessage',
             ])
             ->where(function ($query) use ($user) {
@@ -178,7 +178,7 @@ class MessageController extends Controller
                     'title' => $conversation->advert?->title ?? 'Watch Listing',
                     'price' => $conversation->advert?->price,
                     'advert_image' => $conversation->advert?->mainImageUrl(),
-                    'other_name' => $other?->name ?? 'User',
+                    'other_name' => $other?->publicDisplayName() ?? 'User',
                     'last_message' => $conversation->latestMessage?->message ?? '',
                     'last_time' => optional($conversation->latestMessage?->created_at)?->diffForHumans(),
                 ];

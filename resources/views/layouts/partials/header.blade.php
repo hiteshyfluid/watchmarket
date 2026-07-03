@@ -157,10 +157,82 @@
                     <a href="{{ route('login') }}" class="hidden lg:inline-flex items-center rounded-xl border border-[#ececec] px-4 h-10 text-[15px] font-medium text-[#111] no-underline hover:bg-[#fafafa]">Login</a>
                 @endauth
 
-                <a href="{{ route('sell-watch') }}" class="inline-flex items-center justify-center rounded-xl bg-[#d4b160] px-3.5 sm:px-5 h-9 sm:h-10 text-[14px] sm:text-[16px] font-semibold text-[#111] no-underline hover:bg-[#c7a552] whitespace-nowrap">
-                    <span class="sm:hidden">Create</span>
-                    <span class="hidden sm:inline">Create Advert</span>
+                <a href="{{ route('sell-watch') }}" class="hidden lg:inline-flex items-center justify-center rounded-xl bg-[#d4b160] px-5 h-10 text-[16px] font-semibold text-[#111] no-underline hover:bg-[#c7a552] whitespace-nowrap">
+                    Create Advert
                 </a>
+
+                @auth
+                    <div x-data="{ mobileAccountOpen: false }" class="relative lg:hidden">
+                        <button
+                            type="button"
+                            @click="mobileAccountOpen = !mobileAccountOpen"
+                            class="inline-flex w-10 h-10 rounded-full items-center justify-center text-[#222] hover:bg-[#f6f6f6]"
+                            aria-label="Account menu"
+                        >
+                            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.42 0-8 2.24-8 5v2a1 1 0 001 1h14a1 1 0 001-1v-2c0-2.76-3.58-5-8-5z"/></svg>
+                        </button>
+
+                        <div
+                            x-cloak
+                            x-show="mobileAccountOpen"
+                            @click.away="mobileAccountOpen = false"
+                            @keydown.escape.window="mobileAccountOpen = false"
+                            x-transition
+                            class="absolute right-0 mt-3 w-72 max-w-[calc(100vw-2rem)] bg-[#f7f7f7] border border-[#d8d8d8] rounded-xl shadow-[0_18px_35px_rgba(0,0,0,0.14)] overflow-hidden z-50"
+                        >
+                            <div class="px-5 py-4 border-b border-[#e3e3e3]">
+                                <div class="text-[18px] font-semibold text-[#222]">{{ $authUser->name }}</div>
+                                <div class="text-[14px] text-[#6a6a6a]">{{ $authUser->email }}</div>
+                                <div class="mt-3">
+                                    <span class="inline-flex items-center rounded-full border px-3 py-1 text-[12px] font-semibold {{ $authUser->isTradeSeller() ? 'border-[#e4d2a1] bg-[#f6efe0] text-[#8c6a22]' : ($authUser->isPrivateSeller() ? 'border-[#cfd8e3] bg-[#eef3f8] text-[#35516f]' : 'border-[#e5e5e5] bg-white text-[#555]') }}">
+                                        {{ $authUser->roleLabel() }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="py-2">
+                                <a href="{{ route('sell-watch') }}" class="px-5 py-2.5 flex items-center gap-3 no-underline text-[#8c6a22] font-semibold hover:bg-[#f6efe0]">
+                                    <svg class="w-5 h-5 text-[#8c6a22]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v16m8-8H4"/></svg>
+                                    <span class="text-[16px]">Create Advert</span>
+                                </a>
+                                <div class="border-t border-[#e3e3e3] my-1"></div>
+                                <a href="{{ route('my-account') }}" class="px-5 py-2.5 flex items-center gap-3 no-underline text-[#222] hover:bg-[#efefef]">
+                                    <svg class="w-5 h-5 text-[#222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7l9-4 9 4-9 4-9-4zm0 5l9 4 9-4m-18 5l9 4 9-4"/></svg>
+                                    <span class="text-[16px]">Dashboard</span>
+                                </a>
+                                <a href="{{ route('my-account', ['tab' => 'profile']) }}" class="px-5 py-2.5 flex items-center gap-3 no-underline text-[#222] hover:bg-[#efefef]">
+                                    <svg class="w-5 h-5 text-[#222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    <span class="text-[16px]">My Profile</span>
+                                </a>
+                                <a href="{{ route('messages.index') }}" class="px-5 py-2.5 flex items-center gap-3 no-underline text-[#222] hover:bg-[#efefef]">
+                                    <svg class="w-5 h-5 text-[#222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-9 5l3.6-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v3z"/></svg>
+                                    <span class="text-[16px]">Messages</span>
+                                </a>
+                                @if($authUser->isPrivateSeller())
+                                <div class="border-t border-[#e3e3e3] my-1"></div>
+                                <a href="{{ route('seller.trade.packages') }}" class="px-5 py-2.5 flex items-center gap-3 no-underline text-[#8c6a22] hover:bg-[#f6efe0]">
+                                    <svg class="w-5 h-5 text-[#8c6a22]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                    <span class="text-[16px] font-semibold">Upgrade to Trade Seller</span>
+                                </a>
+                                @endif
+                            </div>
+
+                            <div class="border-t border-[#e3e3e3] p-3">
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full h-10 rounded-lg text-left px-3 flex items-center gap-3 text-red-500 hover:bg-[#f1f1f1]">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 17l5-5m0 0l-5-5m5 5H9m4 5v1a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v1"/></svg>
+                                        <span class="text-[16px]">Sign Out</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <a href="{{ route('login') }}" class="lg:hidden inline-flex w-10 h-10 rounded-full items-center justify-center text-[#222] hover:bg-[#f6f6f6]" aria-label="Login">
+                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.42 0-8 2.24-8 5v2a1 1 0 001 1h14a1 1 0 001-1v-2c0-2.76-3.58-5-8-5z"/></svg>
+                    </a>
+                @endauth
             </div>
         </div>
     </div>
