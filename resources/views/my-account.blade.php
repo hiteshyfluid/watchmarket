@@ -289,8 +289,8 @@
                         </div>
                         @if($user->isTradeSeller())
                         <div class="md:col-span-2">
-                            <label class="block text-[14px] text-[#444] mb-1">Company Name</label>
-                            <input type="text" name="company_name" value="{{ old('company_name', $user->company_name) }}" placeholder="Shown on your listings instead of your personal name" class="w-full h-11 border border-[#d1d1d1] rounded-lg px-3 text-[16px]">
+                            <label class="block text-[14px] text-[#444] mb-1">Trading Name *</label>
+                            <input type="text" name="company_name" required value="{{ old('company_name', $user->company_name) }}" placeholder="Shown on your listings instead of your personal name" class="w-full h-11 border border-[#d1d1d1] rounded-lg px-3 text-[16px]">
                             @error('company_name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
                         @endif

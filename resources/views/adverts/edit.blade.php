@@ -1,6 +1,6 @@
 <x-main-layout>
     @php
-        $privateEditLock = $privateEditLock ?? false;
+        $productDetailsLocked = $productDetailsLocked ?? false;
         $privatePriceRange = $privatePriceRange ?? null;
 
         $existingPhotos = [];
@@ -69,59 +69,63 @@
                             <h2 class="text-[28px] font-semibold text-[#111]">Watch Details</h2>
                             <p class="text-[16px] text-[#666] mt-2">Update your watch details</p>
 
+                            @if($productDetailsLocked)
+                                <p class="mt-3 rounded-lg border border-[#e9cf8d] bg-[#fbf6e7] px-3 py-2 text-[13px] text-[#7a4e00]">Watch identity and specifications are locked after publication. You can still update the title, photos, condition, box and papers, service history, description, price, and location.</p>
+                            @endif
+
                             <div class="mt-6 border border-[#d8d8d8] rounded-xl p-5 space-y-5 bg-[#fafafa]">
                                 <div>
                                     <label class="block text-[16px] font-semibold text-[#111] mb-2">Title *</label>
-                                    <input type="text" name="title" value="{{ old('title', $advert->title) }}" required {{ $privateEditLock ? 'readonly' : '' }}
-                                        class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $privateEditLock ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
+                                    <input type="text" name="title" value="{{ old('title', $advert->title) }}" maxlength="255" required
+                                        class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-[16px] font-semibold text-[#111] mb-2">Brand *</label>
-                                        <select name="brand_id" @change="selectedBrand = $event.target.value" required {{ $privateEditLock ? 'disabled' : '' }}
-                                            class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $privateEditLock ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
+                                        <select name="brand_id" @change="selectedBrand = $event.target.value" required {{ $productDetailsLocked ? 'disabled' : '' }}
+                                            class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $productDetailsLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                             <option value="">Select brand</option>
                                             @foreach($brands as $brand)
                                                 <option value="{{ $brand->id }}" {{ old('brand_id', $advert->brand_id) == $brand->id ? 'selected' : '' }}>{{ $brand->name }}</option>
                                             @endforeach
                                         </select>
-                                        @if($privateEditLock)
+                                        @if($productDetailsLocked)
                                             <input type="hidden" name="brand_id" value="{{ old('brand_id', $advert->brand_id) }}">
                                         @endif
                                     </div>
 
                                     <div>
                                         <label class="block text-[16px] font-semibold text-[#111] mb-2">Model *</label>
-                                        <select name="model_id" required {{ $privateEditLock ? 'disabled' : '' }}
-                                            class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $privateEditLock ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
+                                        <select name="model_id" required {{ $productDetailsLocked ? 'disabled' : '' }}
+                                            class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $productDetailsLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                             <option value="">Select model</option>
                                             @foreach($allModels as $m)
                                                 <option value="{{ $m->id }}" data-parent="{{ $m->parent_id }}" x-show="!selectedBrand || selectedBrand == '{{ $m->parent_id }}'" {{ old('model_id', $advert->model_id) == $m->id ? 'selected' : '' }}>{{ $m->name }}</option>
                                             @endforeach
                                         </select>
-                                        @if($privateEditLock)
+                                        @if($productDetailsLocked)
                                             <input type="hidden" name="model_id" value="{{ old('model_id', $advert->model_id) }}">
                                         @endif
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-[16px] font-semibold text-[#111] mb-2">Watch Serial No:</label>
-                                    <input type="text" name="reference_number" value="{{ old('reference_number', $advert->reference_number) }}" placeholder="e.g., 126610LN"
-                                        class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                    <label class="block text-[16px] font-semibold text-[#111] mb-2">Reference Number</label>
+                                    <input type="text" name="reference_number" value="{{ old('reference_number', $advert->reference_number) }}" placeholder="e.g., 126610LN" {{ $productDetailsLocked ? 'readonly' : '' }}
+                                        class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $productDetailsLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-[16px] font-semibold text-[#111] mb-2">Year *</label>
-                                        <select name="year_id" required {{ $privateEditLock ? 'disabled' : '' }} class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $privateEditLock ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
+                                        <select name="year_id" required {{ $productDetailsLocked ? 'disabled' : '' }} class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $productDetailsLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                             <option value="">Select year</option>
                                             @foreach($years->reverse() as $opt)
                                                 <option value="{{ $opt->id }}" {{ old('year_id', $advert->year_id) == $opt->id ? 'selected' : '' }}>{{ $opt->name }}</option>
                                             @endforeach
                                         </select>
-                                        @if($privateEditLock)
+                                        @if($productDetailsLocked)
                                             <input type="hidden" name="year_id" value="{{ old('year_id', $advert->year_id) }}">
                                         @endif
                                     </div>
@@ -169,7 +173,7 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-[16px] font-semibold text-[#111] mb-2">Movement</label>
-                                        <select name="movement_id" class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                        <select name="movement_id" {{ $productDetailsLocked ? 'disabled' : '' }} class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $productDetailsLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                             <option value="">Select type</option>
                                             @foreach($movements as $opt)
                                                 <option value="{{ $opt->id }}" {{ old('movement_id', $advert->movement_id) == $opt->id ? 'selected' : '' }}>{{ $opt->name }}</option>
@@ -178,13 +182,13 @@
                                     </div>
                                     <div>
                                         <label class="block text-[16px] font-semibold text-[#111] mb-2">Case Size (mm)</label>
-                                        <input type="text" name="case_size_mm" value="{{ old('case_size_mm', $advert->case_size_mm) }}" placeholder="e.g., 41" class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                        <input type="text" name="case_size_mm" value="{{ old('case_size_mm', $advert->case_size_mm) }}" placeholder="e.g., 41" {{ $productDetailsLocked ? 'readonly' : '' }} class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $productDetailsLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                     </div>
                                 </div>
 
                                 <div>
                                     <label class="block text-[16px] font-semibold text-[#111] mb-2">Case Material</label>
-                                    <select name="case_material_id" class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                    <select name="case_material_id" {{ $productDetailsLocked ? 'disabled' : '' }} class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $productDetailsLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                         <option value="">Select material</option>
                                         @foreach($caseMaterials as $opt)
                                             <option value="{{ $opt->id }}" {{ old('case_material_id', $advert->case_material_id) == $opt->id ? 'selected' : '' }}>{{ $opt->name }}</option>
@@ -194,7 +198,7 @@
 
                                 <div>
                                     <label class="block text-[16px] font-semibold text-[#111] mb-2">Dial Colour</label>
-                                    <select name="dial_colour_id" class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                    <select name="dial_colour_id" {{ $productDetailsLocked ? 'disabled' : '' }} class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $productDetailsLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                         <option value="">Select dial colour</option>
                                         @foreach($dialColours as $opt)
                                             <option value="{{ $opt->id }}" {{ old('dial_colour_id', $advert->dial_colour_id) == $opt->id ? 'selected' : '' }}>{{ $opt->name }}</option>
@@ -204,7 +208,7 @@
 
                                 <div>
                                     <label class="block text-[16px] font-semibold text-[#111] mb-2">Bracelet Material</label>
-                                    <select name="bracelet_material_id" class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
+                                    <select name="bracelet_material_id" {{ $productDetailsLocked ? 'disabled' : '' }} class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px] {{ $productDetailsLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}">
                                         <option value="">Select bracelet material</option>
                                         @foreach($braceletMaterials as $opt)
                                             <option value="{{ $opt->id }}" {{ old('bracelet_material_id', $advert->bracelet_material_id) == $opt->id ? 'selected' : '' }}>{{ $opt->name }}</option>
@@ -260,7 +264,7 @@
                                         <span class="text-center text-[14px]">Add Photos</span>
                                         <input id="edit-photos-input" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="hidden" @change="handlePhotos($event)">
                                     </label>
-                                    <p class="text-[13px] text-[#777] mt-2">Minimum 2, Maximum 20 images. First image becomes main image.</p>
+                                    <p class="text-[13px] text-[#777] mt-2">Upload at least 2 images. The first image becomes the main image.</p>
                                 </div>
 
                                 <template x-if="allPreviews.length > 0">
@@ -287,7 +291,13 @@
                                 @if($advert->main_image)
                                     <div>
                                         <p class="text-[13px] text-[#555] mb-2 font-semibold">Current Main Photo</p>
-                                        <img src="{{ $advert->mainImageUrl() }}" class="w-36 h-28 object-cover rounded-lg border border-[#d7d7d7]" alt="Main photo">
+                                        <div class="flex flex-wrap items-start gap-4">
+                                            <img src="{{ $advert->mainImageUrl() }}" class="w-36 h-28 object-cover rounded-lg border border-[#d7d7d7]" alt="Main photo">
+                                            <label class="inline-flex items-center gap-2 text-[13px] text-[#555] cursor-pointer">
+                                                <input type="checkbox" name="remove_photos[]" value="main" class="rounded border-[#aaa]" onchange="if (this.checked && !confirm('Remove the current main photo? The first gallery photo will become the main photo.')) this.checked = false;">
+                                                Remove current main photo when saving
+                                            </label>
+                                        </div>
                                     </div>
                                 @endif
 
@@ -512,10 +522,12 @@
                             this.photoError = 'Please wait, photos are still uploading.';
                             return false;
                         }
+                        @if($advert->status === \App\Models\Advert::STATUS_DRAFT)
                         if (this.allPreviews.length < 2) {
                             this.photoError = 'Please upload at least 2 images.';
                             return false;
                         }
+                        @endif
                         this.photoError = '';
                     }
 
@@ -616,14 +628,7 @@
                         }
                     }
 
-                    const available = 20 - this.allPreviews.length;
-                    const files = incoming.slice(0, Math.max(available, 0));
-                    if (!files.length) {
-                        this.photoError = 'You can upload a maximum of 20 images.';
-                        input.value = '';
-                        return;
-                    }
-                    this.uploadSelectedFiles(files, input);
+                    this.uploadSelectedFiles(incoming, input);
                 },
                 async uploadSelectedFiles(files, inputEl) {
                     this.isUploading = true;

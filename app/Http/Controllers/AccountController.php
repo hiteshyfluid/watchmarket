@@ -112,7 +112,7 @@ class AccountController extends Controller
         ];
 
         if ($user->isTradeSeller()) {
-            $rules['company_name'] = ['nullable', 'string', 'max:255'];
+            $rules['company_name'] = ['required', 'string', 'max:255'];
         }
 
         if ($user->isSeller()) {

@@ -60,7 +60,7 @@
                         <div class="mt-6 border border-[#d8d8d8] rounded-xl p-5 space-y-5 bg-[#fafafa]">
                             <div>
                                 <label class="block text-[16px] font-semibold text-[#111] mb-2">Title *</label>
-                                <input type="text" name="title" value="{{ old('title') }}" required placeholder="e.g., Rolex Submariner Date"
+                                <input type="text" name="title" value="{{ old('title') }}" maxlength="255" required placeholder="e.g., Rolex Submariner Date"
                                     class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                             </div>
 
@@ -141,7 +141,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[16px] font-semibold text-[#111] mb-2">Watch Serial No:</label>
+                                <label class="block text-[16px] font-semibold text-[#111] mb-2">Reference Number</label>
                                 <input type="text" name="reference_number" value="{{ old('reference_number') }}" placeholder="e.g., 126610LN"
                                     class="w-full h-10 border border-[#d0d0d0] rounded-lg px-3 text-[14px]">
                             </div>
@@ -274,7 +274,7 @@
                                     <span class="text-center text-[14px]">Add Photos</span>
                                     <input id="photos-input" type="file" name="photos[]" accept=".jpg,.jpeg,.png,.webp" multiple class="hidden" @change="handlePhotos($event)">
                                 </label>
-                                <p class="text-[13px] text-[#777] mt-2">Minimum 2, Maximum 20 images. First image becomes main image.</p>
+                                <p class="text-[13px] text-[#777] mt-2">Upload at least 2 images. The first image becomes the main image.</p>
                             </div>
 
                             <template x-for="path in uploadedPhotoPaths" :key="path">
@@ -502,10 +502,6 @@
                             this.photoError = 'Please upload at least 2 images.';
                             return false;
                         }
-                        if (this.photoCount > 20) {
-                            this.photoError = 'You can upload a maximum of 20 images.';
-                            return false;
-                        }
                     }
 
                     if (current === 4) {
@@ -568,14 +564,7 @@
                         }
                     }
 
-                    const availableSlots = 20 - this.uploadedPhotoPaths.length;
-                    const files = incoming.slice(0, Math.max(availableSlots, 0));
-                    if (!files.length) {
-                        this.photoError = 'You can upload a maximum of 20 images.';
-                        input.value = '';
-                        return;
-                    }
-                    this.uploadSelectedFiles(files, input);
+                    this.uploadSelectedFiles(incoming, input);
                 },
                 async uploadSelectedFiles(files, inputEl) {
                     this.isUploading = true;
@@ -647,8 +636,6 @@
                 updatePhotoValidation() {
                     if (this.photoCount < 2) {
                         this.photoError = 'Please upload at least 2 images.';
-                    } else if (this.photoCount > 20) {
-                        this.photoError = 'You can upload a maximum of 20 images.';
                     } else {
                         this.photoError = '';
                     }

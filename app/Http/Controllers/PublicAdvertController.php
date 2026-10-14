@@ -72,7 +72,11 @@ class PublicAdvertController extends Controller
         }
 
         if ($request->boolean('box_papers')) {
-            $query->whereNotNull('box_id')->whereNotNull('paper_id');
+            // Both fields have required Yes/No options, so a non-null foreign
+            // key does not mean the seller actually has the item.
+            $notIncludedOptions = array_map('ucwords', Advert::NOT_INCLUDED_BOX_PAPERS_OPTIONS);
+            $query->whereHas('box', fn ($box) => $box->whereNotIn('name', $notIncludedOptions))
+                ->whereHas('paper', fn ($paper) => $paper->whereNotIn('name', $notIncludedOptions));
         }
 
         if ($sellerType === 'trade') {

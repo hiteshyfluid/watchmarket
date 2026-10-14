@@ -40,7 +40,13 @@
                 </div>
 
                 <div class="bg-white border rounded p-6 space-y-4">
-                    <h2 class="text-2xl font-bold text-gray-900">Billing Address</h2>
+                    <h2 class="text-2xl font-bold text-gray-900">Trading &amp; Billing Details</h2>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Trading Name</label>
+                        <input type="text" name="company_name" required value="{{ old('company_name', $user->company_name) }}" placeholder="The business name shown on your listings" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+                        <p class="mt-1 text-xs text-gray-500">Required for trade seller accounts.</p>
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>

@@ -240,6 +240,7 @@ class MembershipPurchaseService
             'country' => $billingData['country'],
             'phone' => $billingData['phone'],
             'email' => $billingData['email'],
+            'company_name' => $billingData['company_name'] ?? $user->company_name,
             'role' => $billingData['role'] ?? $user->role,
         ]);
     }

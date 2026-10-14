@@ -52,11 +52,19 @@ class SellerController extends Controller
             'role' => 'required|in:private_seller,trade_seller',
         ]);
 
+        $user = auth()->user();
+
         if ($request->role === User::ROLE_TRADE_SELLER) {
+            $validated = $request->validate(
+                ['company_name' => 'required|string|max:255'],
+                [],
+                ['company_name' => 'trading name']
+            );
+            $user->update(['company_name' => $validated['company_name']]);
+
             return redirect()->route('seller.trade.packages');
         }
 
-        $user = auth()->user();
         $user->role = $request->role;
         $user->save();
 
@@ -120,7 +128,7 @@ class SellerController extends Controller
     {
         $this->ensureTradeLevel($level);
 
-        $validated = $this->validateBillingData($request, (int) auth()->id());
+        $validated = $this->validateBillingData($request, (int) auth()->id(), true);
         $user = auth()->user();
         $checkoutType = MembershipPurchaseService::TYPE_TRADE;
         $requiresStripe = $this->stripeCheckoutService->requiresStripe($level, $checkoutType);
@@ -526,9 +534,9 @@ class SellerController extends Controller
             ->exists();
     }
 
-    private function validateBillingData(Request $request, int $userId): array
+    private function validateBillingData(Request $request, int $userId, bool $requiresTradingName = false): array
     {
-        return $request->validate([
+        $rules = [
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'address' => 'required|string|max:1000',
@@ -537,7 +545,13 @@ class SellerController extends Controller
             'country' => 'required|string|max:100',
             'phone' => 'required|string|max:50',
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
-        ]);
+        ];
+
+        if ($requiresTradingName) {
+            $rules['company_name'] = 'required|string|max:255';
+        }
+
+        return $request->validate($rules, [], ['company_name' => 'trading name']);
     }
 
     private function resolvePendingOrderAfterCheckout(

@@ -177,18 +177,21 @@
                                     <div class="px-2.5 py-2.5 sm:px-4 sm:py-4">
                                         <div class="text-[10px] sm:text-[13px] uppercase text-[#c7a552] tracking-wide">{{ $advert->brand->name ?? 'Brand' }}</div>
                                         <div class="mt-0.5 sm:mt-1 text-[13px] sm:text-[20px] leading-4 sm:leading-7 font-semibold truncate">{{ \Illuminate\Support\Str::limit($advert->title, 32) }}</div>
-                                        <div class="mt-0.5 sm:mt-1 text-[10px] sm:text-[13px] text-[#5b5b5b]">Ref. #{{ $advert->id }}</div>
+                                        @if($advert->reference_number)
+                                            <div class="mt-0.5 sm:mt-1 text-[10px] sm:text-[13px] text-[#5b5b5b]">Reference Number: {{ $advert->reference_number }}</div>
+                                        @endif
                                         <div class="mt-1.5 sm:mt-3 flex flex-wrap gap-1 sm:gap-2 text-[9px] sm:text-[12px]">
-                                            @if($advert->condition)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->condition->name }}</span>@endif
+                                            @if($advert->condition)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">Condition: {{ $advert->condition->name }}</span>@endif
                                             @if($advert->year)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->year->name }}</span>@endif
-                                            @if($advert->box && $advert->paper)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">Box &amp; Papers</span>@endif
+                                            <span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->boxAndPapersLabel() }}</span>
+                                            @if($advert->user?->isSeller())<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#f6efe0] text-[#8c6a22]">{{ $advert->user->roleLabel() }}</span>@endif
                                         </div>
                                         <div class="my-2 sm:my-4 h-px bg-[#dddddd]"></div>
                                         <div class="flex items-end gap-1">
                                             <div class="text-[14px] sm:text-[20px] leading-none font-semibold">&pound;{{ number_format((float) $advert->price, 0) }}</div>
                                             <span class="text-[10px] sm:text-[12px] text-[#666] mb-0.5 sm:mb-1">{{ $advert->price_negotiable ? 'ONO' : '' }}</span>
                                         </div>
-                                        <div class="mt-1 sm:mt-3 text-[11px] sm:text-[14px] text-[#666] truncate">{{ $advert->user?->city ?: 'Location not set' }}</div>
+                                        <div class="mt-1 sm:mt-3 text-[11px] sm:text-[14px] text-[#666] truncate">{{ $advert->locationLabel() }}</div>
                                     </div>
                                 </a>
                             @empty

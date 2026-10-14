@@ -125,18 +125,17 @@
                         <div class="px-2.5 py-2.5 sm:px-4 sm:py-4">
                             <div class="text-[10px] sm:text-[13px] uppercase text-[#d4b160] tracking-wide">{{ $advert->brand->name ?? 'Brand' }}</div>
                             <div class="mt-0.5 sm:mt-1 text-[13px] sm:text-[20px] leading-4 sm:leading-9 font-semibold truncate">{{ \Illuminate\Support\Str::limit($advert->title, 28) }}</div>
-                            <div class="mt-0.5 sm:mt-1 text-[10px] sm:text-[13px] text-white/70">Ref. #{{ $advert->id }}</div>
+                            @if($advert->reference_number)<div class="mt-0.5 sm:mt-1 text-[10px] sm:text-[13px] text-white/70">Reference Number: {{ $advert->reference_number }}</div>@endif
                             <div class="mt-1.5 sm:mt-3 flex flex-wrap gap-1 sm:gap-2 text-[9px] sm:text-[12px]">
-                                @if($advert->condition)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">{{ $advert->condition->name }}</span>@endif
+                                @if($advert->condition)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">Condition: {{ $advert->condition->name }}</span>@endif
                                 @if($advert->year)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">{{ $advert->year->name }}</span>@endif
-                                @if($advert->box)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">Box</span>@endif
-                                @if($advert->paper)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">Papers</span>@endif
+                                <span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#2b2b2b]">{{ $advert->boxAndPapersLabel() }}</span>
                             </div>
                             <div class="my-2 sm:my-4 h-px bg-white/20"></div>
                             <div class="text-[14px] sm:text-[20px] font-semibold leading-none">&pound;{{ number_format((float) $advert->price, 0) }}</div>
                             <div class="mt-1 sm:mt-3 text-[11px] sm:text-[14px] text-white/70 flex items-center gap-1 sm:gap-1.5 truncate">
                                 <svg class="w-3 h-3 sm:w-4 sm:h-4 text-[#7a7a7a] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.2" stroke-width="1.8"></circle></svg>
-                                <span class="truncate">{{ $advert->user?->city ?: 'Location not set' }}</span>
+                                <span class="truncate">{{ $advert->locationLabel() }}</span>
                             </div>
                         </div>
                     </a>
@@ -173,12 +172,11 @@
                         <div class="px-2.5 py-2.5 sm:px-4 sm:py-4">
                             <div class="text-[10px] sm:text-[13px] uppercase text-[#c7a552] tracking-wide">{{ $advert->brand->name ?? 'Brand' }}</div>
                             <div class="mt-0.5 sm:mt-1 text-[13px] sm:text-[20px] leading-4 sm:leading-7 font-semibold truncate">{{ \Illuminate\Support\Str::limit($advert->title, 30) }}</div>
-                            <div class="mt-0.5 sm:mt-1 text-[10px] sm:text-[13px] text-[#5b5b5b]">Ref. #{{ $advert->id }}</div>
+                            @if($advert->reference_number)<div class="mt-0.5 sm:mt-1 text-[10px] sm:text-[13px] text-[#5b5b5b]">Reference Number: {{ $advert->reference_number }}</div>@endif
                             <div class="mt-1.5 sm:mt-3 flex flex-wrap gap-1 sm:gap-2 text-[9px] sm:text-[12px]">
-                                @if($advert->condition)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->condition->name }}</span>@endif
+                                @if($advert->condition)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">Condition: {{ $advert->condition->name }}</span>@endif
                                 @if($advert->year)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->year->name }}</span>@endif
-                                @if($advert->box)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">Box</span>@endif
-                                @if($advert->paper)<span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">Box &amp; Papers</span>@endif
+                                <span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#ececec] text-[#454545]">{{ $advert->boxAndPapersLabel() }}</span>
                             </div>
                             <div class="my-2 sm:my-4 h-px bg-[#dddddd]"></div>
                             <div class="flex items-end gap-1">
@@ -187,7 +185,7 @@
                             </div>
                             <div class="mt-1 sm:mt-3 text-[11px] sm:text-[14px] text-[#666] flex items-center gap-1 sm:gap-1.5 truncate">
                                 <svg class="w-3 h-3 sm:w-4 sm:h-4 text-[#7a7a7a] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.2" stroke-width="1.8"></circle></svg>
-                                <span class="truncate">{{ $advert->user?->city ?: 'Location not set' }}</span>
+                                <span class="truncate">{{ $advert->locationLabel() }}</span>
                             </div>
                         </div>
                     </a>

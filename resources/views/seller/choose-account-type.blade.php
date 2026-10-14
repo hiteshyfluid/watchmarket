@@ -34,7 +34,7 @@
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-red-600 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                Upload up to 10 pictures.
+                                Add as many listing photos as needed.
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-red-600 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -80,17 +80,26 @@
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-red-600 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                Upload up to 20 pictures.
+                                Add as many listing photos as needed.
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-red-600 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 Unlock additional features to quickly sell your watch.
                             </li>
                         </ul>
-                        <a href="{{ route('seller.trade.packages') }}"
-                           class="w-full inline-flex items-center justify-center bg-black text-white font-bold py-3 uppercase tracking-widest hover:bg-gray-800 transition no-underline">
-                            Continue
-                        </a>
+                        <form action="{{ route('seller.update-account-type') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="role" value="trade_seller">
+                            <label for="trade-company-name" class="block text-sm font-semibold text-gray-700 mb-2">Trading Name *</label>
+                            <input id="trade-company-name" type="text" name="company_name" required maxlength="255"
+                                   value="{{ old('company_name', auth()->user()->company_name) }}"
+                                   placeholder="The business name shown on your listings"
+                                   class="w-full border border-gray-300 rounded px-3 py-2 mb-2">
+                            @error('company_name')<p class="text-sm text-red-600 mb-3">{{ $message }}</p>@enderror
+                            <button type="submit" class="w-full bg-black text-white font-bold py-3 uppercase tracking-widest hover:bg-gray-800 transition">
+                                Continue
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

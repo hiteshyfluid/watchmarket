@@ -259,10 +259,10 @@ class AdvertController extends Controller
     {
         $this->authorize_owner($advert);
         $data = $this->formData();
-        $privateEditLock = $this->isPrivatePublishedAdvert($advert);
-        $privatePriceRange = $privateEditLock ? $this->privatePublishedPriceRange($advert) : null;
+        $productDetailsLocked = $this->isPublishedAdvert($advert);
+        $privatePriceRange = $this->isPrivatePublishedAdvert($advert) ? $this->privatePublishedPriceRange($advert) : null;
 
-        return view('adverts.edit', array_merge($data, compact('advert', 'privateEditLock', 'privatePriceRange')));
+        return view('adverts.edit', array_merge($data, compact('advert', 'productDetailsLocked', 'privatePriceRange')));
     }
 
     public function update(Request $request, Advert $advert)
@@ -271,7 +271,14 @@ class AdvertController extends Controller
 
         $validated = $request->validate($this->rules(false));
         $validated = $this->normalizeAdvertBooleans($request, $validated);
-        $this->enforcePrivatePublishedRestrictions($advert, $validated);
+        $this->enforcePublishedAdvertRestrictions($advert, $validated);
+
+        $this->removeRequestedPhotos(
+            $advert,
+            (array) $request->input('remove_photos', []),
+            $request->hasFile('main_image')
+        );
+        $advert->refresh();
 
         // Replace main image if new one uploaded
         if ($request->hasFile('main_image')) {
@@ -453,7 +460,7 @@ class AdvertController extends Controller
             'postcode'             => 'nullable|string|max:60',
             'meeting_preference_id'=> 'nullable|exists:attribute_options,id',
             'show_phone'           => 'nullable|boolean',
-            'uploaded_photos'      => 'nullable|array|max:20',
+            'uploaded_photos'      => 'nullable|array',
             'uploaded_photos.*'    => 'nullable|string|max:500',
             'paper_id'             => 'nullable|exists:attribute_options,id',
             'box_id'               => 'nullable|exists:attribute_options,id',
@@ -523,9 +530,9 @@ class AdvertController extends Controller
             'show_phone'          => 'nullable|boolean',
             'main_image'          => $isCreate ? 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120' : 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'gallery.*'           => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
-            'photos'              => 'nullable|array|max:20',
+            'photos'              => 'nullable|array',
             'photos.*'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
-            'uploaded_photos'     => 'nullable|array|max:20',
+            'uploaded_photos'     => 'nullable|array',
             'uploaded_photos.*'   => 'nullable|string|max:500',
             'paper_id'            => 'required|exists:attribute_options,id',
             'box_id'              => 'required|exists:attribute_options,id',
@@ -628,9 +635,14 @@ class AdvertController extends Controller
         return $user->tradeAdvertUsage();
     }
 
+    private function isPublishedAdvert(Advert $advert): bool
+    {
+        return $advert->status !== Advert::STATUS_DRAFT;
+    }
+
     private function isPrivatePublishedAdvert(Advert $advert): bool
     {
-        return auth()->user()->isPrivateSeller() && $advert->status !== Advert::STATUS_DRAFT;
+        return auth()->user()->isPrivateSeller() && $this->isPublishedAdvert($advert);
     }
 
     private function privatePublishedPriceRange(Advert $advert): ?array
@@ -657,18 +669,40 @@ class AdvertController extends Controller
         return ['min' => (float) $min, 'max' => (float) $max];
     }
 
-    private function enforcePrivatePublishedRestrictions(Advert $advert, array $validated): void
+    private function enforcePublishedAdvertRestrictions(Advert $advert, array $validated): void
     {
-        if (!$this->isPrivatePublishedAdvert($advert)) {
+        if (!$this->isPublishedAdvert($advert)) {
             return;
         }
 
-        foreach (['title', 'brand_id', 'model_id', 'year_id'] as $field) {
-            $newValue = $validated[$field] ?? null;
+        // A title is editorial and deliberately remains editable. These fields
+        // identify the listed watch and must not be changed after publication.
+        $lockedFields = [
+            'brand_id',
+            'model_id',
+            'reference_number',
+            'category_id',
+            'year_id',
+            'gender_id',
+            'case_size_mm',
+            'movement_id',
+            'case_material_id',
+            'bracelet_material_id',
+            'dial_colour_id',
+            'case_diameter_id',
+            'waterproof_id',
+        ];
+
+        foreach ($lockedFields as $field) {
+            if (!array_key_exists($field, $validated)) {
+                continue;
+            }
+
+            $newValue = $validated[$field];
             $oldValue = $advert->{$field};
             if ((string) $newValue !== (string) $oldValue) {
                 throw ValidationException::withMessages([
-                    $field => 'For published private adverts, title, brand, model, and year cannot be changed.',
+                    $field => 'Watch identification and specifications cannot be changed after publication.',
                 ]);
             }
         }
@@ -680,6 +714,43 @@ class AdvertController extends Controller
                 throw ValidationException::withMessages([
                     'price' => "You can set pricing only between £{$range['min']} and £{$range['max']} for this purchased package.",
                 ]);
+            }
+        }
+    }
+
+    /**
+     * Remove only images belonging to the advert. When the main image is
+     * removed, promote the first gallery image so active listings retain a
+     * usable primary image. A listing with just one image must be replaced
+     * rather than left without a main photo.
+     */
+    private function removeRequestedPhotos(Advert $advert, array $removePhotoIds, bool $mainPhotoReplacementProvided = false): void
+    {
+        $removePhotoIds = array_values(array_filter($removePhotoIds, fn ($id) => $id !== null && $id !== ''));
+
+        if (in_array('main', $removePhotoIds, true) && $advert->main_image && !$mainPhotoReplacementProvided) {
+            $replacement = $advert->images()->first();
+
+            if ($replacement) {
+                $this->deleteImagePath($advert->main_image);
+                $advert->update(['main_image' => $replacement->image_path]);
+                $replacement->delete();
+            } else {
+                throw ValidationException::withMessages([
+                    'remove_photos' => 'A listing needs a main photo. Upload a replacement before removing its only photo.',
+                ]);
+            }
+        }
+
+        foreach ($removePhotoIds as $removeId) {
+            if ($removeId === 'main') {
+                continue;
+            }
+
+            $image = $advert->images()->find((int) $removeId);
+            if ($image) {
+                $this->deleteImagePath($image->image_path);
+                $image->delete();
             }
         }
     }

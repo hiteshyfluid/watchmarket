@@ -6,6 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Advert extends Model
 {
+    public const NOT_INCLUDED_BOX_PAPERS_OPTIONS = [
+        'no',
+        'none',
+        'no box',
+        'no papers',
+        'without',
+        'without box',
+        'without papers',
+        'not included',
+        'not available',
+        'not applicable',
+        'false',
+    ];
+
     public const STATUS_DRAFT   = 'draft';
     public const STATUS_ACTIVE  = 'active';
     public const STATUS_PAUSED  = 'paused';
@@ -165,6 +179,43 @@ class Advert extends Model
             return asset('storage/' . $path);
         }
         return null;
+    }
+
+    public function locationLabel(): string
+    {
+        return $this->city ?: ($this->user?->city ?: 'Location not set');
+    }
+
+    /**
+     * The box and papers fields are stored as separate Yes/No attribute
+     * options.  Do not treat the presence of an option row as confirmation:
+     * both fields are required, including when a seller selects "No".
+     */
+    public function hasBox(): bool
+    {
+        return $this->hasIncludedAttributeOption($this->box?->name);
+    }
+
+    public function hasPapers(): bool
+    {
+        return $this->hasIncludedAttributeOption($this->paper?->name);
+    }
+
+    public function boxAndPapersLabel(): string
+    {
+        return match ([$this->hasBox(), $this->hasPapers()]) {
+            [true, true] => 'Box & Papers',
+            [true, false] => 'Box only',
+            [false, true] => 'Papers only',
+            default => 'No box or papers',
+        };
+    }
+
+    private function hasIncludedAttributeOption(?string $value): bool
+    {
+        $value = strtolower(trim((string) $value));
+
+        return $value !== '' && !in_array($value, self::NOT_INCLUDED_BOX_PAPERS_OPTIONS, true);
     }
 
     public function isReadyForCheckout(): bool

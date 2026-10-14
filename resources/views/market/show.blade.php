@@ -77,7 +77,7 @@
                 <h1 class="text-[28px] md:text-[34px] font-semibold leading-[1.1] text-[#111]">{{ $advert->title }}</h1>
 
                 @if($advert->reference_number)
-                    <p class="text-[14px] text-[#6b7280] mt-2">Ref. {{ $advert->reference_number }}</p>
+                    <p class="text-[14px] text-[#6b7280] mt-2">Reference Number: {{ $advert->reference_number }}</p>
                 @endif
 
                 <div class="mt-3 flex items-end gap-2">
@@ -87,7 +87,7 @@
 
                 <div class="mt-4 flex flex-wrap items-center gap-2">
                     @if($advert->condition?->name)
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[13px] bg-[#e9f8ee] text-[#1f7a3e]">{{ $advert->condition->name }}</span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[13px] bg-[#e9f8ee] text-[#1f7a3e]">Condition: {{ $advert->condition->name }}</span>
                     @endif
                     @if($advert->year?->name)
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-[13px] bg-[#f3f4f6] text-[#333]">{{ $advert->year->name }}</span>
@@ -114,11 +114,13 @@
                 <div class="mt-7 border-t border-[#e8e8e8] pt-6">
                     <h2 class="text-[31px] font-semibold text-[#111] mb-4">Specifications</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-[16px]">
+                        <div><span class="text-[#777] text-[14px]">Reference Number</span><div class="text-[#111] font-medium mt-0.5">{{ $advert->reference_number ?: '-' }}</div></div>
+                        <div><span class="text-[#777] text-[14px]">Condition</span><div class="text-[#111] font-medium mt-0.5">{{ $advert->condition->name ?? '-' }}</div></div>
                         <div><span class="text-[#777] text-[14px]">Case Size</span><div class="text-[#111] font-medium mt-0.5">{{ $advert->case_size_mm ? $advert->case_size_mm.'mm' : '-' }}</div></div>
                         <div><span class="text-[#777] text-[14px]">Case Material</span><div class="text-[#111] font-medium mt-0.5">{{ $advert->caseMaterial->name ?? '-' }}</div></div>
                         <div><span class="text-[#777] text-[14px]">Movement</span><div class="text-[#111] font-medium mt-0.5">{{ $advert->movement->name ?? '-' }}</div></div>
                         <div><span class="text-[#777] text-[14px]">Dial Colour</span><div class="text-[#111] font-medium mt-0.5">{{ $advert->dialColour->name ?? '-' }}</div></div>
-                        <div><span class="text-[#777] text-[14px]">Box &amp; Papers</span><div class="text-[#111] font-medium mt-0.5">{{ ($advert->box->name ?? 'No Box') . ' / ' . ($advert->paper->name ?? 'No Papers') }}</div></div>
+                        <div><span class="text-[#777] text-[14px]">Box &amp; Papers</span><div class="text-[#111] font-medium mt-0.5">{{ $advert->boxAndPapersLabel() }}</div></div>
                         <div><span class="text-[#777] text-[14px]">Year</span><div class="text-[#111] font-medium mt-0.5">{{ $advert->year->name ?? '-' }}</div></div>
                     </div>
                 </div>
@@ -138,7 +140,7 @@
                                     {{ $advert->user->roleLabel() }}
                                 </span>
                             @endif
-                            <div class="text-[15px] text-[#666] mt-2">{{ $advert->city ?: ($advert->user->city ?? '-') }}</div>
+                            <div class="text-[15px] text-[#666] mt-2">{{ $advert->locationLabel() }}</div>
                             @if($advert->show_phone && !empty($advert->user?->phone))
                                 <div class="text-[15px] text-[#666] mt-1">{{ $advert->user->phone }}</div>
                             @endif
