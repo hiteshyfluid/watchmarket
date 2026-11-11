@@ -20,4 +20,11 @@ class PageController extends Controller
 
         return view('pages.show', compact('page'));
     }
+
+    public function cookies(): View
+    {
+        $page = Page::where('slug', Page::SLUG_COOKIES)->firstOrFail();
+
+        return view('pages.show', compact('page'));
+    }
 }

@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PageController extends Controller
 {
-    private const EDITABLE_SLUGS = [Page::SLUG_TERMS, Page::SLUG_PRIVACY];
+    private const EDITABLE_SLUGS = [Page::SLUG_TERMS, Page::SLUG_PRIVACY, Page::SLUG_COOKIES];
 
     public function edit(Page $page): View
     {

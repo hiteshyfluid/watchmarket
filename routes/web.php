@@ -19,6 +19,7 @@ Route::get('/contact-us', [App\Http\Controllers\ContactController::class, 'show'
 Route::post('/contact-us', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
 Route::get('/terms-conditions', [App\Http\Controllers\PageController::class, 'terms'])->name('pages.terms');
 Route::get('/privacy-policy', [App\Http\Controllers\PageController::class, 'privacy'])->name('pages.privacy');
+Route::get('/cookie-policy', [App\Http\Controllers\PageController::class, 'cookies'])->name('pages.cookies');
 Route::get('/help-centre', fn () => view('help-centre'))->name('help.index');
 Route::get('/safety-tips', fn () => view('safety-tips'))->name('safety.tips');
 Route::get('/report-a-listing', [App\Http\Controllers\ListingReportController::class, 'show'])->name('report-listing.show');
@@ -147,6 +148,8 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\AdminMiddleware::clas
             ->name('seo.index');
         Route::post('/seo-meta', [App\Http\Controllers\Admin\SeoMetaController::class, 'update'])
             ->name('seo.update');
+        Route::get('/schema', [App\Http\Controllers\Admin\SchemaSettingController::class, 'edit'])->name('schema.edit');
+        Route::put('/schema', [App\Http\Controllers\Admin\SchemaSettingController::class, 'update'])->name('schema.update');
 
         Route::get('/pages/{page:slug}/edit', [App\Http\Controllers\Admin\PageController::class, 'edit'])->name('pages.edit');
         Route::put('/pages/{page:slug}', [App\Http\Controllers\Admin\PageController::class, 'update'])->name('pages.update');

@@ -49,6 +49,9 @@ class RegisteredUserController extends Controller
                     ->numbers()
                     ->symbols(),
             ],
+            'accept_terms' => ['accepted'],
+        ], [
+            'accept_terms.accepted' => 'Please agree to the Terms & Conditions and Privacy Policy to register.',
         ]);
 
         $user = User::create([

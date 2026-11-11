@@ -52,7 +52,12 @@
 
                         <div class="mt-3">
                             <input
-                                type="text"
+                                type="search"
+                                name="conversation_search"
+                                autocomplete="off"
+                                data-lpignore="true"
+                                data-1p-ignore
+                                aria-label="Search conversations"
                                 x-model="search"
                                 placeholder="Search conversations..."
                                 class="w-full h-11 border border-[#ddd] rounded-lg px-3 text-[14px]"
@@ -131,13 +136,21 @@
 
                             <div class="border-t border-[#ececec] p-4">
                                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                                    <input
-                                        type="text"
+                                    {{-- textarea (not input) so browser password managers never autofill credentials here --}}
+                                    <textarea
+                                        name="chat_message"
+                                        id="chat-message"
+                                        rows="1"
+                                        autocomplete="off"
+                                        data-lpignore="true"
+                                        data-1p-ignore
+                                        data-form-type="other"
+                                        aria-label="Message"
                                         x-model="newMessage"
-                                        @keydown.enter.prevent="sendMessage()"
+                                        @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); sendMessage(); }"
                                         placeholder="Type your message..."
-                                        class="flex-1 h-11 border border-[#ddd] rounded-lg px-3 text-[14px]"
-                                    >
+                                        class="flex-1 min-h-11 max-h-32 border border-[#ddd] rounded-lg px-3 py-2.5 text-[14px] leading-5 resize-none"
+                                    ></textarea>
 
                                     <button
                                         type="button"

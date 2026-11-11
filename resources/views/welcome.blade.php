@@ -1,4 +1,8 @@
 <x-main-layout>
+    @push('structured-data')
+        @include('partials.json-ld', ['data' => \App\Support\StructuredData::website()])
+    @endpush
+
     <section class="relative overflow-hidden text-white">
         <div class="absolute inset-0 bg-center bg-cover" style="background-image:url('{{ asset('images/banner.jpg') }}');"></div>
         <div class="absolute inset-0 bg-black/75"></div>

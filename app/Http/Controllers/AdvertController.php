@@ -69,48 +69,8 @@ class AdvertController extends Controller
         $validated = $request->validate($this->draftRules());
         $validated = $this->normalizeAdvertBooleans($request, $validated);
 
-        // Process photo removals
-        $removePhotoIds = array_filter((array) $request->input('remove_photos', []));
-        if (in_array('main', $removePhotoIds, true) && $advert->main_image) {
-            $this->deleteImagePath($advert->main_image);
-            $advert->update(['main_image' => null]);
-            $advert->refresh();
-        }
-        foreach ($removePhotoIds as $removeId) {
-            if ($removeId === 'main') {
-                continue;
-            }
-            $image = $advert->images()->find((int) $removeId);
-            if ($image) {
-                $this->deleteImagePath($image->image_path);
-                $image->delete();
-            }
-        }
-        $advert->refresh();
-
-        $uploadedPhotoPaths = $this->sanitizeDraftPhotoPaths((array) $request->input('uploaded_photos', []));
-
-        $fields = $this->advertDraftFields($validated);
-
-        if (!empty($uploadedPhotoPaths) && !$advert->main_image) {
-            $mainPath = $this->moveDraftPhotoToFinal(array_shift($uploadedPhotoPaths), true);
-            if ($mainPath) {
-                $fields['main_image'] = $mainPath;
-            }
-        }
-
-        $advert->update($fields);
-
-        // Save any remaining new photos as gallery images
-        foreach (array_values($uploadedPhotoPaths) as $i => $path) {
-            $finalPath = $this->moveDraftPhotoToFinal($path, false);
-            if ($finalPath) {
-                $advert->images()->create([
-                    'image_path' => $finalPath,
-                    'sort_order' => ($advert->images()->max('sort_order') ?? -1) + 1 + $i,
-                ]);
-            }
-        }
+        $advert->update($this->advertDraftFields($validated));
+        $this->applyPhotoChanges($request, $advert, false);
 
         return redirect()->route('my-account')
             ->with('success', 'Draft updated! You can continue editing it from your Dashboard anytime.');
@@ -121,55 +81,21 @@ class AdvertController extends Controller
         $this->authorize_owner($advert);
         abort_unless($advert->status === Advert::STATUS_DRAFT, 403, 'Only drafts can be published this way.');
 
-        // Process photo removals before validation
-        $removePhotoIds = array_filter((array) $request->input('remove_photos', []));
-        if (in_array('main', $removePhotoIds, true) && $advert->main_image) {
-            $this->deleteImagePath($advert->main_image);
-            $advert->update(['main_image' => null]);
-            $advert->refresh();
-        }
-        foreach ($removePhotoIds as $removeId) {
-            if ($removeId === 'main') {
-                continue;
-            }
-            $image = $advert->images()->find((int) $removeId);
-            if ($image) {
-                $this->deleteImagePath($image->image_path);
-                $image->delete();
-            }
-        }
-        $advert->refresh();
-
         $validated = $request->validate($this->rules());
         $validated = $this->normalizeAdvertBooleans($request, $validated);
-        $uploadedPhotoPaths = $this->sanitizeDraftPhotoPaths((array) $request->input('uploaded_photos', []));
 
-        $existingCount = ($advert->main_image ? 1 : 0) + $advert->images()->count();
-        $photoCount = $existingCount + count($uploadedPhotoPaths);
-        if ($photoCount < 2) {
+        if ($this->plannedPhotoCount($request, $advert) < 2) {
             throw ValidationException::withMessages(['photos' => 'Please upload at least 2 images.']);
         }
 
-        $mainImagePath = $advert->main_image;
-        if (!empty($uploadedPhotoPaths) && !$advert->main_image) {
-            $mainImagePath = $this->moveDraftPhotoToFinal(array_shift($uploadedPhotoPaths), true);
-        }
+        $this->applyPhotoChanges($request, $advert, true);
+        $advert->refresh();
 
         $advert->update(array_merge($this->advertFields($validated), [
-            'main_image'  => $mainImagePath,
+            'main_image'  => $advert->main_image,
             'status'      => Advert::STATUS_DRAFT,
             'expiry_date' => null,
         ]));
-
-        foreach (array_values($uploadedPhotoPaths) as $i => $path) {
-            $finalPath = $this->moveDraftPhotoToFinal($path, false);
-            if ($finalPath) {
-                $advert->images()->create([
-                    'image_path' => $finalPath,
-                    'sort_order' => ($advert->images()->max('sort_order') ?? -1) + 1 + $i,
-                ]);
-            }
-        }
 
         $user = auth()->user();
         if ($user->isPrivateSeller()) {
@@ -273,33 +199,12 @@ class AdvertController extends Controller
         $validated = $this->normalizeAdvertBooleans($request, $validated);
         $this->enforcePublishedAdvertRestrictions($advert, $validated);
 
-        $this->removeRequestedPhotos(
-            $advert,
-            (array) $request->input('remove_photos', []),
-            $request->hasFile('main_image')
-        );
+        $this->applyPhotoChanges($request, $advert, true);
         $advert->refresh();
 
-        // Replace main image if new one uploaded
-        if ($request->hasFile('main_image')) {
-            if ($advert->main_image) {
-                $this->deleteImagePath($advert->main_image);
-            }
-            $validated['main_image'] = $this->storeImageInPublic($request->file('main_image'), 'adverts/main');
-        }
-
-        $advert->update($this->advertFields($validated, isset($validated['main_image']) ? $validated['main_image'] : $advert->main_image, $advert));
+        $advert->update($this->advertFields($validated, $advert->main_image, $advert));
         if (auth()->user()->isTradeSeller()) {
             $advert->update(['expiry_date' => null]);
-        }
-
-        // Append new gallery images
-        if ($request->hasFile('gallery')) {
-            $nextOrder = $advert->images()->max('sort_order') + 1;
-            foreach ($request->file('gallery') as $index => $file) {
-                $path = $this->storeImageInPublic($file, 'adverts/gallery');
-                $advert->images()->create(['image_path' => $path, 'sort_order' => $nextOrder + $index]);
-            }
         }
 
         return redirect()->route('my-account')
@@ -534,6 +439,8 @@ class AdvertController extends Controller
             'photos.*'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'uploaded_photos'     => 'nullable|array',
             'uploaded_photos.*'   => 'nullable|string|max:500',
+            'main_photo_upload'   => 'nullable|string|max:500',
+            'remove_photos'       => 'nullable|array',
             'paper_id'            => 'required|exists:attribute_options,id',
             'box_id'              => 'required|exists:attribute_options,id',
             'year_id'             => 'required|exists:attribute_options,id',
@@ -719,40 +626,87 @@ class AdvertController extends Controller
     }
 
     /**
-     * Remove only images belonging to the advert. When the main image is
-     * removed, promote the first gallery image so active listings retain a
-     * usable primary image. A listing with just one image must be replaced
-     * rather than left without a main photo.
+     * Read the photo changes staged in the edit form. New photos are already
+     * uploaded to the user's drafts folder; nothing touches the advert until
+     * the form is saved.
+     *
+     * @return array{remove: string[], newMain: ?string, uploads: string[]}
      */
-    private function removeRequestedPhotos(Advert $advert, array $removePhotoIds, bool $mainPhotoReplacementProvided = false): void
+    private function stagedPhotoChanges(Request $request): array
     {
-        $removePhotoIds = array_values(array_filter($removePhotoIds, fn ($id) => $id !== null && $id !== ''));
+        $remove = array_values(array_filter(
+            array_map('strval', (array) $request->input('remove_photos', [])),
+            fn ($id) => $id !== ''
+        ));
+        $newMain = $this->sanitizeDraftPhotoPaths([(string) $request->input('main_photo_upload', '')])[0] ?? null;
+        $uploads = array_values(array_filter(
+            $this->sanitizeDraftPhotoPaths((array) $request->input('uploaded_photos', [])),
+            fn ($path) => $path !== $newMain
+        ));
 
-        if (in_array('main', $removePhotoIds, true) && $advert->main_image && !$mainPhotoReplacementProvided) {
-            $replacement = $advert->images()->first();
+        return compact('remove', 'newMain', 'uploads');
+    }
 
-            if ($replacement) {
-                $this->deleteImagePath($advert->main_image);
-                $advert->update(['main_image' => $replacement->image_path]);
-                $replacement->delete();
-            } else {
-                throw ValidationException::withMessages([
-                    'remove_photos' => 'A listing needs a main photo. Upload a replacement before removing its only photo.',
-                ]);
-            }
+    /** Number of photos the advert will have once the staged changes are applied. */
+    private function plannedPhotoCount(Request $request, Advert $advert): int
+    {
+        ['remove' => $remove, 'newMain' => $newMain, 'uploads' => $uploads] = $this->stagedPhotoChanges($request);
+
+        $removedGallery = $advert->images()->whereIn('id', array_map('intval', array_diff($remove, ['main'])))->count();
+        $gallery = $advert->images()->count() - $removedGallery + count($uploads);
+        $hasMain = $newMain || ($advert->main_image && !in_array('main', $remove, true));
+
+        return ($hasMain ? 1 : 0) + $gallery;
+    }
+
+    /**
+     * Apply staged photo changes: gallery removals, new gallery photos, and a
+     * replaced or removed main photo. When the main photo is removed without a
+     * replacement, the first gallery photo is promoted. With $requireMainPhoto
+     * the advert may not be left without any photo.
+     */
+    private function applyPhotoChanges(Request $request, Advert $advert, bool $requireMainPhoto): void
+    {
+        ['remove' => $remove, 'newMain' => $newMain, 'uploads' => $uploads] = $this->stagedPhotoChanges($request);
+
+        if ($requireMainPhoto && $this->plannedPhotoCount($request, $advert) < 1) {
+            throw ValidationException::withMessages([
+                'remove_photos' => 'A listing needs a main photo. Add a replacement before removing its only photo.',
+            ]);
         }
 
-        foreach ($removePhotoIds as $removeId) {
-            if ($removeId === 'main') {
-                continue;
-            }
-
+        foreach (array_diff($remove, ['main']) as $removeId) {
             $image = $advert->images()->find((int) $removeId);
             if ($image) {
                 $this->deleteImagePath($image->image_path);
                 $image->delete();
             }
         }
+
+        $nextOrder = ($advert->images()->max('sort_order') ?? -1) + 1;
+        foreach ($uploads as $path) {
+            $finalPath = $this->moveDraftPhotoToFinal($path, false);
+            if ($finalPath) {
+                $advert->images()->create(['image_path' => $finalPath, 'sort_order' => $nextOrder++]);
+            }
+        }
+
+        $newMainPath = $newMain ? $this->moveDraftPhotoToFinal($newMain, true) : null;
+        if ($newMainPath) {
+            $this->deleteImagePath($advert->main_image);
+            $advert->update(['main_image' => $newMainPath]);
+        } elseif (in_array('main', $remove, true) && $advert->main_image) {
+            $this->deleteImagePath($advert->main_image);
+            $advert->update(['main_image' => null]);
+        }
+
+        // Promote the first gallery photo when there is no main photo.
+        if (!$advert->main_image && ($promoted = $advert->images()->first())) {
+            $advert->update(['main_image' => $promoted->image_path]);
+            $promoted->delete();
+        }
+
+        $advert->unsetRelation('images');
     }
 
     private function sanitizeDraftPhotoPaths(array $paths): array

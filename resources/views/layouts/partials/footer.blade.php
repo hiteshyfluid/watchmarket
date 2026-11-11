@@ -44,7 +44,7 @@
             <div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
                 <a href="{{ route('pages.privacy') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Privacy Policy</a>
                 <a href="{{ route('pages.terms') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Terms of Service</a>
-                <a href="#" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Cookie Policy</a>
+                <a href="{{ route('pages.cookies') }}" class="no-underline text-[#b8b8b8] hover:text-white text-[14px]">Cookie Policy</a>
             </div>
         </div>
     </div>

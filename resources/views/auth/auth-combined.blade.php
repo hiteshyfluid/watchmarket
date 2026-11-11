@@ -123,9 +123,19 @@
                             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                         </div>
 
-                        <p class="text-[14px] leading-7 text-[#4f4f4f] pt-1">
-                            Your personal data will be used to support your experience throughout this website, to manage access to your account, and for other purposes described in our privacy policy.
-                        </p>
+                        <div class="pt-1">
+                            <label for="accept_terms" class="flex items-start gap-3 text-[14px] leading-6 text-[#4f4f4f] cursor-pointer">
+                                <input id="accept_terms" type="checkbox" name="accept_terms" value="1" required {{ old('accept_terms') ? 'checked' : '' }}
+                                    class="mt-1 w-4 h-4 shrink-0 rounded-none border-[#9a9a9a] text-black focus:ring-black">
+                                <span>
+                                    I agree to the WatchMarket
+                                    <a href="{{ route('pages.terms') }}" target="_blank" rel="noopener" class="underline text-[14px] leading-6 font-normal text-[#111] hover:no-underline">Terms &amp; Conditions</a>
+                                    and have read the
+                                    <a href="{{ route('pages.privacy') }}" target="_blank" rel="noopener" class="underline text-[14px] leading-6 font-normal text-[#111] hover:no-underline">Privacy Policy</a>.
+                                </span>
+                            </label>
+                            <x-input-error :messages="$errors->get('accept_terms')" class="mt-2" />
+                        </div>
 
                         <div class="pt-2">
                             <button type="submit" class="inline-flex items-center justify-center h-11 min-w-[140px] px-8 bg-[#171717] text-white text-[14px] font-semibold hover:bg-black transition">

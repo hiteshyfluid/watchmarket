@@ -68,6 +68,13 @@
                 <span x-show="sidebarOpen" class="whitespace-nowrap">SEO Meta</span>
             </a>
 
+            {{-- Schema Markup --}}
+            <a href="{{ route('admin.schema.edit') }}"
+               class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 {{ request()->routeIs('admin.schema.*') ? 'bg-gray-700 text-white' : '' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l-3 3 3 3m8-6l3 3-3 3M14 5l-4 14"/></svg>
+                <span x-show="sidebarOpen" class="whitespace-nowrap">Schema Markup</span>
+            </a>
+
             {{-- Memberships --}}
             <div x-data="{ open: {{ request()->routeIs('admin.membership-levels.*') || request()->routeIs('admin.membership-members.*') || request()->routeIs('admin.membership-orders.*') || request()->routeIs('admin.membership-settings.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
@@ -187,6 +194,10 @@
                     <a href="{{ route('admin.pages.edit', \App\Models\Page::SLUG_PRIVACY) }}"
                        class="flex items-center gap-2 px-3 py-1.5 rounded text-xs hover:bg-gray-700 hover:text-white {{ request()->routeIs('admin.pages.*') && request()->route('page')?->slug === \App\Models\Page::SLUG_PRIVACY ? 'text-white' : 'text-gray-400' }}">
                         Privacy Policy
+                    </a>
+                    <a href="{{ route('admin.pages.edit', \App\Models\Page::SLUG_COOKIES) }}"
+                       class="flex items-center gap-2 px-3 py-1.5 rounded text-xs hover:bg-gray-700 hover:text-white {{ request()->routeIs('admin.pages.*') && request()->route('page')?->slug === \App\Models\Page::SLUG_COOKIES ? 'text-white' : 'text-gray-400' }}">
+                        Cookie Policy
                     </a>
                 </div>
             </div>

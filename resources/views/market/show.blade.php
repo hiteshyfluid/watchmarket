@@ -1,4 +1,9 @@
 ﻿<x-main-layout>
+    @push('structured-data')
+        @include('partials.json-ld', ['data' => \App\Support\StructuredData::product($advert)])
+        @include('partials.json-ld', ['data' => \App\Support\StructuredData::listingBreadcrumbs($advert)])
+    @endpush
+
     @php
         $galleryImages = [];
         if ($advert->mainImageUrl()) {

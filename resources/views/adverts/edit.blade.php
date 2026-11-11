@@ -3,25 +3,27 @@
         $productDetailsLocked = $productDetailsLocked ?? false;
         $privatePriceRange = $privatePriceRange ?? null;
 
-        $existingPhotos = [];
-        if ($advert->status === \App\Models\Advert::STATUS_DRAFT) {
-            if ($advert->main_image) {
-                $existingPhotos[] = [
-                    'id'       => 'main',
-                    'path'     => $advert->main_image,
-                    'url'      => $advert->mainImageUrl(),
-                    'existing' => true,
-                ];
+        $isDraft = $advert->status === \App\Models\Advert::STATUS_DRAFT;
+
+        // Restore staged photo changes after a validation error. Only accept
+        // files that are in this user's drafts folder and still exist.
+        $draftPrefix = 'images/adverts/drafts/' . auth()->id() . '/';
+        $stagedPhoto = function ($path) use ($draftPrefix) {
+            $path = is_string($path) ? trim($path) : '';
+            if ($path === '' || !str_starts_with($path, $draftPrefix) || str_contains($path, '..') || !is_file(public_path($path))) {
+                return null;
             }
-            foreach ($advert->images as $img) {
-                $existingPhotos[] = [
-                    'id'       => (string) $img->id,
-                    'path'     => $img->image_path,
-                    'url'      => $img->url(),
-                    'existing' => true,
-                ];
-            }
-        }
+            return ['path' => $path, 'url' => asset($path)];
+        };
+
+        $photoState = [
+            'existingMain'      => $advert->main_image ? ['url' => $advert->mainImageUrl()] : null,
+            'existingGallery'   => $advert->images->map(fn ($img) => ['id' => (string) $img->id, 'url' => $img->url()])->values(),
+            'newMain'           => $stagedPhoto(old('main_photo_upload')),
+            'newGallery'        => collect((array) old('uploaded_photos', []))->map($stagedPhoto)->filter()->values(),
+            'mainRemoved'       => in_array('main', (array) old('remove_photos', []), true),
+            'removedGalleryIds' => collect((array) old('remove_photos', []))->reject(fn ($id) => $id === 'main')->map(fn ($id) => (string) $id)->values(),
+        ];
     @endphp
 
     <section x-data="editAdvertWizard()">
@@ -231,111 +233,144 @@
                         {{-- ── Step 3: Photos ──────────────────────────────────────── --}}
                         <div x-show="step === 3" x-cloak>
                             <h2 class="text-[28px] font-semibold text-[#111]">Photos</h2>
-                            <p class="text-[16px] text-[#666] mt-2">
-                                {{ $advert->status === \App\Models\Advert::STATUS_DRAFT ? 'Upload at least 2 high-quality images' : 'Manage current photos and upload more' }}
-                            </p>
+                            <p class="text-[15px] text-[#666] mt-1">Your main photo is the first thing buyers see. Replace it or add more to the gallery.</p>
 
-                            <div class="mt-6 border border-[#d8d8d8] rounded-xl p-5 space-y-5 bg-[#fafafa]">
+                            {{-- Staged changes: applied only when the form is saved --}}
+                            <input type="hidden" name="main_photo_upload" :value="newMain ? newMain.path : ''">
+                            <template x-if="mainRemoved && existingMain">
+                                <input type="hidden" name="remove_photos[]" value="main">
+                            </template>
+                            <template x-for="id in removedGalleryIds" :key="'rm-' + id">
+                                <input type="hidden" name="remove_photos[]" :value="id">
+                            </template>
+                            <template x-for="photo in newGallery" :key="'up-' + photo.path">
+                                <input type="hidden" name="uploaded_photos[]" :value="photo.path">
+                            </template>
+                            <input x-ref="mainInput" type="file" accept=".jpg,.jpeg,.png,.webp" class="hidden" @change="onMainFiles($event.target.files); $event.target.value = null">
+                            <input x-ref="galleryInput" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="hidden" @change="addGalleryFiles($event.target.files); $event.target.value = null">
 
-                                @if($advert->status === \App\Models\Advert::STATUS_DRAFT)
-                                {{-- Draft: AJAX upload widget with existing photo grid ──── --}}
+                            {{-- Main photo --}}
+                            <div class="mt-6 bg-white border rounded-xl p-4 md:p-5 transition-colors"
+                                 :class="mainChanged ? 'border-[#111]' : 'border-[#e3e3e3]'">
+                                <div class="flex flex-col md:flex-row gap-3 md:gap-6">
+                                    <div class="md:hidden flex items-center justify-between gap-3">
+                                        <h3 class="text-[16px] font-semibold text-[#111]">Main photo</h3>
+                                        <span class="text-[11px] font-semibold rounded-full px-2 py-0.5"
+                                              :class="mainChanged ? 'bg-[#fdf1d8] text-[#8a5a00]' : 'bg-[#f1f1f1] text-[#555]'"
+                                              x-text="mainChanged ? 'Not saved yet' : 'Shown first'"></span>
+                                    </div>
 
-                                <div class="rounded-lg border border-[#e9cf8d] bg-[#fbf6e7] p-4 text-[12px] text-[#7a4e00]">
-                                    <strong>Required photo angles:</strong>
-                                    <ul class="list-disc list-inside mt-2 space-y-1">
-                                        <li>Dial (front face)</li>
-                                        <li>Caseback</li>
-                                        <li>Clasp/buckle</li>
-                                        <li>Side profile</li>
-                                        <li>Wrist shot or size reference</li>
-                                    </ul>
-                                </div>
-
-                                {{-- Hidden inputs submitted with form --}}
-                                <template x-for="id in removedExistingIds" :key="id">
-                                    <input type="hidden" name="remove_photos[]" :value="id">
-                                </template>
-                                <template x-for="path in uploadedPhotoPaths" :key="path">
-                                    <input type="hidden" name="uploaded_photos[]" :value="path">
-                                </template>
-
-                                <div>
-                                    <label class="inline-flex items-center justify-center w-44 h-32 border border-dashed border-[#cfcfcf] rounded-lg bg-white cursor-pointer text-[#666] hover:border-[#bdbdbd]">
-                                        <span class="text-center text-[14px]">Add Photos</span>
-                                        <input id="edit-photos-input" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="hidden" @change="handlePhotos($event)">
-                                    </label>
-                                    <p class="text-[13px] text-[#777] mt-2">Upload at least 2 images. The first image becomes the main image.</p>
-                                </div>
-
-                                <template x-if="allPreviews.length > 0">
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                        <template x-for="(photo, idx) in allPreviews" :key="photo.id">
-                                            <div class="relative rounded-lg overflow-hidden bg-white border border-[#dcdcdc] h-24">
-                                                <img :src="photo.url" class="w-full h-full object-cover" alt="preview">
-                                                <button type="button"
-                                                    @click="removePhotoFromList(photo)"
-                                                    class="absolute top-1 right-1 w-5 h-5 rounded-full bg-white/95 text-[#444] text-[12px] leading-none border border-[#ddd] hover:bg-[#f7f7f7]">
-                                                    &times;
-                                                </button>
-                                                <span x-show="idx === 0" class="absolute left-1 bottom-1 text-[11px] px-2 py-0.5 rounded bg-[#1f2937] text-white">Main</span>
-                                            </div>
+                                    {{-- Preview (also a drop target on desktop) --}}
+                                    <div class="relative md:w-[300px] md:shrink-0 aspect-[4/3] rounded-lg overflow-hidden bg-[#f3f3f3] border-2 transition"
+                                         :class="dragTarget === 'main' ? 'border-dashed border-[#111]' : (newMain ? 'border-[#111]' : 'border-transparent')"
+                                         @dragover.prevent="dragTarget = 'main'" @dragleave.prevent="dragTarget = null"
+                                         @drop.prevent="dragTarget = null; onMainFiles($event.dataTransfer.files)">
+                                        <template x-if="mainPreviewUrl">
+                                            <img :src="mainPreviewUrl" alt="Main photo" class="w-full h-full object-cover transition" :class="mainRemoved && !newMain && !promotedFromGallery ? 'opacity-40 grayscale' : ''">
                                         </template>
+                                        <template x-if="!mainPreviewUrl">
+                                            <button type="button" @click="$refs.mainInput.click()" class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[#666] hover:text-[#111]">
+                                                <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+                                                <span class="text-[14px] font-medium">Add main photo</span>
+                                            </button>
+                                        </template>
+                                        <span x-show="newMain" class="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-[#111] text-white text-[11px] font-semibold px-2 py-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            New photo
+                                        </span>
+                                        <span x-show="promotedFromGallery" class="absolute top-2 left-2 rounded-full bg-white/95 text-[#111] text-[11px] font-semibold px-2 py-1 border border-[#ddd]">From gallery</span>
+                                        <div x-show="mainUploading" class="absolute inset-0 bg-white/70 flex items-center justify-center text-[13px] font-medium text-[#333]">Uploading…</div>
                                     </div>
-                                </template>
 
-                                <p class="text-[13px] text-[#777]" x-show="isUploading">Uploading photos...</p>
-                                <p class="text-[14px] text-red-600" x-show="photoError" x-text="photoError"></p>
-
-                                @else
-                                {{-- Non-draft: simple file inputs ──────────────────────── --}}
-                                @if($advert->main_image)
-                                    <div>
-                                        <p class="text-[13px] text-[#555] mb-2 font-semibold">Current Main Photo</p>
-                                        <div class="flex flex-wrap items-start gap-4">
-                                            <img src="{{ $advert->mainImageUrl() }}" class="w-36 h-28 object-cover rounded-lg border border-[#d7d7d7]" alt="Main photo">
-                                            <label class="inline-flex items-center gap-2 text-[13px] text-[#555] cursor-pointer">
-                                                <input type="checkbox" name="remove_photos[]" value="main" class="rounded border-[#aaa]" onchange="if (this.checked && !confirm('Remove the current main photo? The first gallery photo will become the main photo.')) this.checked = false;">
-                                                Remove current main photo when saving
-                                            </label>
+                                    {{-- Details & actions --}}
+                                    <div class="flex-1 min-w-0 flex flex-col gap-3">
+                                        <div class="hidden md:flex items-center gap-3">
+                                            <h3 class="text-[16px] font-semibold text-[#111]">Main photo</h3>
+                                            <span class="text-[11px] font-semibold rounded-full px-2 py-0.5"
+                                                  :class="mainChanged ? 'bg-[#fdf1d8] text-[#8a5a00]' : 'bg-[#f1f1f1] text-[#555]'"
+                                                  x-text="mainChanged ? 'Not saved yet' : 'Shown first'"></span>
                                         </div>
-                                    </div>
-                                @endif
+                                        <p class="hidden md:block text-[13px] text-[#666]" x-show="!mainChanged">Appears at the top of your listing and in search results. Landscape photos in good light work best.</p>
 
-                                @if($advert->images->count())
-                                    <div>
-                                        <p class="text-[13px] text-[#555] mb-2 font-semibold">Current Gallery</p>
-                                        <div class="flex flex-wrap gap-3">
-                                            @foreach($advert->images as $img)
-                                                <div class="relative group">
-                                                    <img src="{{ $img->url() }}" class="w-24 h-20 object-cover rounded border border-[#d7d7d7]" alt="Gallery image">
-                                                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/50 rounded transition">
-                                                        <button
-                                                            type="submit"
-                                                            form="delete-image-{{ $img->id }}"
-                                                            class="text-white text-xs font-bold"
-                                                            onclick="return confirm('Remove this image?')"
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            @endforeach
+                                        {{-- Pending-change strips --}}
+                                        <div x-show="newMain && existingMain" x-cloak class="flex items-center gap-3 rounded-lg bg-[#f6f6f6] border border-[#ececec] p-2.5">
+                                            <img :src="existingMain ? existingMain.url : ''" alt="" class="w-12 h-10 rounded object-cover shrink-0">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-[13px] font-semibold text-[#111]">Replacing current photo</p>
+                                                <p class="text-[12px] text-[#777]">Your listing updates when you save</p>
+                                            </div>
+                                            <button type="button" @click="undoMain()" class="text-[13px] font-semibold text-[#111] underline underline-offset-2 px-2 py-2">Undo</button>
                                         </div>
+                                        <div x-show="mainRemoved && existingMain && !newMain" x-cloak class="flex items-center gap-3 rounded-lg bg-[#fff4f4] border border-[#f5d0d0] p-2.5">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-[13px] font-semibold text-[#9b1c1c]">Current main photo will be removed</p>
+                                                <p class="text-[12px] text-[#9b4b4b]" x-text="visibleGallery.length ? 'Your first gallery photo becomes the main photo when you save.' : 'Choose a new main photo before saving.'"></p>
+                                            </div>
+                                            <button type="button" @click="undoMain()" class="text-[13px] font-semibold text-[#111] underline underline-offset-2 px-2 py-2">Undo</button>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 md:flex md:flex-wrap gap-3">
+                                            <button type="button" @click="$refs.mainInput.click()" :disabled="mainUploading"
+                                                    class="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-lg border border-[#111] bg-white text-[14px] font-semibold text-[#111] hover:bg-[#f5f5f5] disabled:opacity-50">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.66-.9l.82-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+                                                <span x-text="newMain ? 'Choose another' : (existingMain && !mainRemoved ? 'Replace photo' : 'Choose photo')"></span>
+                                            </button>
+                                            <button type="button" @click="removeMain()" x-show="(existingMain && !mainRemoved) || newMain"
+                                                    class="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-lg border border-[#e5e5e5] bg-white text-[14px] font-semibold text-[#c62828] hover:bg-[#fff5f5]">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 7V4h6v3"/></svg>
+                                                Remove photo
+                                            </button>
+                                        </div>
+                                        <p class="text-[12px] text-[#777]">JPG, PNG or WEBP, up to 5MB. Landscape works best.<span class="hidden md:inline"> You can also drag a photo onto the image.</span></p>
                                     </div>
-                                @endif
-
-                                <div>
-                                    <label class="block text-[16px] font-semibold text-[#111] mb-2">Replace Main Photo</label>
-                                    <input type="file" name="main_image" accept=".jpg,.jpeg,.png,.webp" class="block w-full text-[14px] text-[#444]">
                                 </div>
-
-                                <div>
-                                    <label class="block text-[16px] font-semibold text-[#111] mb-2">Add More Gallery Photos</label>
-                                    <input type="file" name="gallery[]" accept=".jpg,.jpeg,.png,.webp" multiple class="block w-full text-[14px] text-[#444]">
-                                </div>
-                                @endif
-
                             </div>
+
+                            {{-- Gallery --}}
+                            <div class="mt-5 bg-white border border-[#e3e3e3] rounded-xl p-4 md:p-5">
+                                <div class="flex items-center justify-between md:justify-start gap-3">
+                                    <h3 class="text-[16px] font-semibold text-[#111]">Gallery</h3>
+                                    <span class="text-[12px] text-[#777]" x-text="visibleGallery.length + (visibleGallery.length === 1 ? ' photo' : ' photos')"></span>
+                                </div>
+
+                                <div class="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                                    <template x-for="(photo, idx) in visibleGallery" :key="photo.key">
+                                        <div class="relative aspect-square rounded-lg overflow-hidden bg-[#f3f3f3] border"
+                                             :class="photo.isNew ? 'border-[#111]' : 'border-[#e3e3e3]'">
+                                            <img :src="photo.url" alt="Gallery photo" class="w-full h-full object-cover" :class="idx === 0 && promotedFromGallery ? 'opacity-50' : ''">
+                                            <button type="button" @click="removeGallery(photo)" aria-label="Remove photo"
+                                                    class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-[#111]/80 text-white flex items-center justify-center hover:bg-[#111]">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                                            </button>
+                                            <span x-show="idx === 0 && promotedFromGallery" class="absolute left-1.5 bottom-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white text-[#111]">Becomes main</span>
+                                            <span x-show="photo.isNew && !(idx === 0 && promotedFromGallery)" class="absolute left-1.5 bottom-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#111] text-white">New</span>
+                                        </div>
+                                    </template>
+                                    <template x-for="n in galleryUploading" :key="'loading-' + n">
+                                        <div class="aspect-square rounded-lg bg-[#f3f3f3] border border-[#e3e3e3] flex items-center justify-center text-[11px] text-[#777]">Uploading…</div>
+                                    </template>
+                                    {{-- Mobile add tile --}}
+                                    <button type="button" @click="$refs.galleryInput.click()"
+                                            class="md:hidden aspect-square rounded-lg border border-dashed border-[#bdbdbd] bg-[#fafafa] flex flex-col items-center justify-center gap-1 text-[#333] hover:border-[#111]">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+                                        <span class="text-[12px] font-medium">Add photos</span>
+                                    </button>
+                                </div>
+
+                                {{-- Desktop drop zone --}}
+                                <button type="button" @click="$refs.galleryInput.click()"
+                                        @dragover.prevent="dragTarget = 'gallery'" @dragleave.prevent="dragTarget = null"
+                                        @drop.prevent="dragTarget = null; addGalleryFiles($event.dataTransfer.files)"
+                                        class="hidden md:flex w-full mt-4 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed py-7 transition"
+                                        :class="dragTarget === 'gallery' ? 'border-[#111] bg-[#f5f5f5]' : 'border-[#d6d6d6] bg-[#fafafa] hover:border-[#999]'">
+                                    <svg class="w-5 h-5 text-[#333]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                                    <span class="text-[14px] text-[#111]"><strong>Add gallery photos</strong> — drag files here or click to browse</span>
+                                    <span class="text-[12px] text-[#777]">Dial, case back, clasp, box &amp; papers all help buyers.</span>
+                                </button>
+                                <p class="md:hidden mt-3 text-[12px] text-[#777]">Add more angles: dial, case back, clasp, box &amp; papers.</p>
+                            </div>
+
+                            <p class="mt-4 text-[14px] text-red-600" x-show="photoError" x-text="photoError"></p>
                         </div>
 
                         {{-- ── Step 4: Pricing & Location ──────────────────────────── --}}
@@ -409,6 +444,10 @@
 
                         {{-- ── Navigation buttons ──────────────────────────────────── --}}
                         <div class="mt-8 flex flex-wrap items-center gap-3 justify-between">
+                            <p x-show="hasUnsavedPhotoChanges" x-cloak class="w-full flex items-center gap-2 text-[13px] text-[#8a5a00]">
+                                <span class="w-2 h-2 rounded-full bg-[#e0a100]"></span>
+                                You have unsaved photo changes
+                            </p>
                             <button type="button" @click="prevStep"
                                     class="h-11 px-6 rounded-lg border border-[#d1d1d1] bg-white text-[16px] text-[#333]"
                                     :class="step === 1 ? 'opacity-50 cursor-not-allowed' : ''"
@@ -441,16 +480,6 @@
                             @endif
                         </div>
                     </form>
-
-                    {{-- Delete-image forms (non-draft only) --}}
-                    @if($advert->status !== \App\Models\Advert::STATUS_DRAFT && $advert->images->count())
-                        @foreach($advert->images as $img)
-                            <form id="delete-image-{{ $img->id }}" method="POST" action="{{ route('adverts.images.destroy', [$advert, $img]) }}" class="hidden">
-                                @csrf
-                                @method('DELETE')
-                            </form>
-                        @endforeach
-                    @endif
                 </div>
             </div>
         </div>
@@ -466,7 +495,7 @@
     <script>
         function editAdvertWizard() {
             return {
-                step: {{ $advert->status === \App\Models\Advert::STATUS_DRAFT ? 1 : 4 }},
+                step: 1,
                 steps: [
                     { title: 'Watch Details', subtitle: 'Basic information' },
                     { title: 'Specifications', subtitle: 'Technical details' },
@@ -474,17 +503,51 @@
                     { title: 'Pricing & Location', subtitle: 'Final step' },
                 ],
 
-                // Photo state — used when editing a draft
-                existingPhotos: @json($existingPhotos),
-                removedExistingIds: [],
-                uploadedPhotoPaths: [],
-                newPhotoPreviews: [],
-                isUploading: false,
+                // Photo state. New photos are uploaded to the drafts folder
+                // straight away but only applied to the advert on save.
+                isDraft: @json($isDraft),
+                existingMain: @json($photoState['existingMain']),
+                existingGallery: @json($photoState['existingGallery']),
+                newMain: @json($photoState['newMain']),
+                newGallery: @json($photoState['newGallery']),
+                mainRemoved: @json($photoState['mainRemoved']),
+                removedGalleryIds: @json($photoState['removedGalleryIds']),
+                mainUploading: false,
+                galleryUploading: 0,
+                dragTarget: null,
                 photoError: '',
 
-                get allPreviews() {
-                    const kept = this.existingPhotos.filter(p => !this.removedExistingIds.includes(p.id));
-                    return [...kept, ...this.newPhotoPreviews];
+                get isUploading() {
+                    return this.mainUploading || this.galleryUploading > 0;
+                },
+                get visibleGallery() {
+                    const kept = this.existingGallery
+                        .filter(p => !this.removedGalleryIds.includes(p.id))
+                        .map(p => ({ ...p, key: 'e-' + p.id, isNew: false }));
+                    const added = this.newGallery.map(p => ({ ...p, key: 'n-' + p.path, isNew: true }));
+                    return [...kept, ...added];
+                },
+                get hasMainPhoto() {
+                    return !!this.newMain || (!!this.existingMain && !this.mainRemoved);
+                },
+                // No main photo staged: the first gallery photo is promoted on save.
+                get promotedFromGallery() {
+                    return !this.hasMainPhoto && this.visibleGallery.length > 0;
+                },
+                get mainPreviewUrl() {
+                    if (this.newMain) return this.newMain.url;
+                    if (this.existingMain && !this.mainRemoved) return this.existingMain.url;
+                    if (this.promotedFromGallery) return this.visibleGallery[0].url;
+                    return this.existingMain ? this.existingMain.url : null;
+                },
+                get mainChanged() {
+                    return !!this.newMain || (this.mainRemoved && !!this.existingMain);
+                },
+                get hasUnsavedPhotoChanges() {
+                    return this.mainChanged || this.newGallery.length > 0 || this.removedGalleryIds.length > 0;
+                },
+                get totalPhotos() {
+                    return (this.hasMainPhoto ? 1 : 0) + this.visibleGallery.length;
                 },
 
                 nextStep() {
@@ -522,12 +585,14 @@
                             this.photoError = 'Please wait, photos are still uploading.';
                             return false;
                         }
-                        @if($advert->status === \App\Models\Advert::STATUS_DRAFT)
-                        if (this.allPreviews.length < 2) {
+                        if (this.isDraft && this.totalPhotos < 2) {
                             this.photoError = 'Please upload at least 2 images.';
                             return false;
                         }
-                        @endif
+                        if (!this.isDraft && this.totalPhotos < 1) {
+                            this.photoError = 'Your listing needs a main photo. Choose one before saving.';
+                            return false;
+                        }
                         this.photoError = '';
                     }
 
@@ -563,7 +628,7 @@
                     const form = document.getElementById('edit-advert-form');
                     if (!form) return;
 
-                    for (const targetStep of [1, 2, 4]) {
+                    for (const targetStep of [1, 2, 3, 4]) {
                         if (!this.validateStep(targetStep)) {
                             this.step = targetStep;
                             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -576,6 +641,11 @@
                 saveDraft() {
                     const form = document.getElementById('edit-advert-form');
                     if (!form) return;
+                    if (this.isUploading) {
+                        this.step = 3;
+                        this.photoError = 'Please wait, photos are still uploading.';
+                        return;
+                    }
                     const methodInput = form.querySelector('input[name="_method"]');
                     form.action = '{{ route('adverts.updateDraft', $advert) }}';
                     if (methodInput) methodInput.remove();
@@ -599,52 +669,75 @@
                     HTMLFormElement.prototype.submit.call(form);
                 },
 
-                // ── Photo upload methods (draft editing) ───────────────────────────
-                removePhotoFromList(photo) {
-                    if (photo.existing) {
-                        this.removedExistingIds.push(photo.id);
-                    } else {
-                        const idx = this.newPhotoPreviews.findIndex(p => p.id === photo.id);
-                        if (idx !== -1) {
-                            const removed = this.newPhotoPreviews[idx];
-                            this.newPhotoPreviews.splice(idx, 1);
-                            this.uploadedPhotoPaths = this.uploadedPhotoPaths.filter(p => p !== removed.path);
-                            this.deleteDraftPhotoRequest(removed.path);
+                // ── Photo methods ───────────────────────────────────────────────
+                validImageFiles(fileList) {
+                    const files = Array.from(fileList || []);
+                    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+                    for (const file of files) {
+                        if (!allowed.includes(file.type)) {
+                            this.photoError = `"${file.name}" isn't a supported image. Use JPG, PNG or WEBP.`;
+                            return [];
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                            this.photoError = `"${file.name}" is too large. Maximum size is 5MB.`;
+                            return [];
                         }
                     }
-                },
-                handlePhotos(event) {
-                    const input = event.target;
-                    const incoming = Array.from(input.files || []);
-                    if (!incoming.length) return;
-
                     this.photoError = '';
-                    const maxSize = 5 * 1024 * 1024;
-                    for (const file of incoming) {
-                        if (file.size > maxSize) {
-                            this.photoError = `File "${file.name}" is too large. Maximum size is 5MB.`;
-                            input.value = '';
-                            return;
+                    return files;
+                },
+                async onMainFiles(fileList) {
+                    const [file] = this.validImageFiles(fileList);
+                    if (!file) return;
+
+                    this.mainUploading = true;
+                    try {
+                        const payload = await this.uploadPhotoAjax(file);
+                        if (!payload?.path) throw new Error('Upload failed');
+                        if (this.newMain) this.deleteDraftPhotoRequest(this.newMain.path);
+                        this.newMain = { path: payload.path, url: payload.url };
+                        this.mainRemoved = false;
+                    } catch {
+                        this.photoError = 'Photo upload failed. Please try again.';
+                    } finally {
+                        this.mainUploading = false;
+                    }
+                },
+                undoMain() {
+                    if (this.newMain) this.deleteDraftPhotoRequest(this.newMain.path);
+                    this.newMain = null;
+                    this.mainRemoved = false;
+                    this.photoError = '';
+                },
+                removeMain() {
+                    if (this.newMain) {
+                        this.deleteDraftPhotoRequest(this.newMain.path);
+                        this.newMain = null;
+                    }
+                    if (this.existingMain) this.mainRemoved = true;
+                },
+                async addGalleryFiles(fileList) {
+                    const files = this.validImageFiles(fileList);
+                    for (const file of files) {
+                        this.galleryUploading++;
+                        try {
+                            const payload = await this.uploadPhotoAjax(file);
+                            if (payload?.path && !this.newGallery.some(p => p.path === payload.path)) {
+                                this.newGallery.push({ path: payload.path, url: payload.url });
+                            }
+                        } catch {
+                            this.photoError = `"${file.name}" failed to upload. Please try again.`;
+                        } finally {
+                            this.galleryUploading--;
                         }
                     }
-
-                    this.uploadSelectedFiles(incoming, input);
                 },
-                async uploadSelectedFiles(files, inputEl) {
-                    this.isUploading = true;
-                    try {
-                        for (const file of files) {
-                            const payload = await this.uploadPhotoAjax(file);
-                            if (!payload?.path) continue;
-                            if (this.uploadedPhotoPaths.includes(payload.path)) continue;
-                            this.uploadedPhotoPaths.push(payload.path);
-                            this.newPhotoPreviews.push({ id: payload.path, path: payload.path, url: payload.url, existing: false });
-                        }
-                    } catch {
-                        this.photoError = 'Image upload failed. Please try again.';
-                    } finally {
-                        this.isUploading = false;
-                        if (inputEl) inputEl.value = '';
+                removeGallery(photo) {
+                    if (photo.isNew) {
+                        this.newGallery = this.newGallery.filter(p => p.path !== photo.path);
+                        this.deleteDraftPhotoRequest(photo.path);
+                    } else if (!this.removedGalleryIds.includes(photo.id)) {
+                        this.removedGalleryIds.push(photo.id);
                     }
                 },
                 async uploadPhotoAjax(file) {
